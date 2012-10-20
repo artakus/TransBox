@@ -1,0 +1,53 @@
+﻿<!--***********************************************
+ * システム名称: 検索表示サイト
+ * 対象プラットフォーム: tablet
+ * モジュール名称: ログインページ
+ * 作成者：Syahir, Tamaki
+ * Copyright(C) 2011 Japan Institute of Sports Sciences All Rights Reserved.
+ ***********************************************-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><!pageTitle!></title>
+        <meta charset="UTF-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+		<meta name="format-detection" content="telephone=no"/>
+		<meta name='viewport' content='width=device-width; initial-scale=1; maximum-scale=1; user-scalable=no;'  />
+		<link rel="apple-touch-icon-precomposed" href="/images/mobile-icon-57.png" />
+		<link rel="apple-touch-icon-precomposed" sizes="72x72"  href="/images/mobile-icon-72.png" />
+		<link rel="apple-touch-icon-precomposed" sizes="114x114"  href="/images/mobile-icon-114.png" />
+		<link rel="stylesheet" href="css/jquery.mobile-1.1.0.min.css" />
+		<link rel="stylesheet"  href="css/iphone.login.css" />
+		<script type="text/javascript" src="?action=lang.js"></script>
+		<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="js/jquery.mobile-1.1.0.min.js"></script>
+		<script type="text/javascript" src="js/jstorage.js"></script>
+		<script type="text/javascript">
+
+		</script>
+		<script type="text/javascript" src="js/functions.js"></script>
+		<script type="text/javascript" src="js/tablet.login.js"></script>
+    </head>
+    <body >
+		<div data-role="page" data-theme="b" data-id="main">
+			<center style="width:360px;margin:auto;">
+			<div>
+				<h1 id="logo">
+					<center><img src="images/jiss-mobile-2.png" alt="JISS.mobile" width="246" height="88" style="left:auto;"/></center>
+				</h1>
+			</div>
+			<div data-role="fieldcontain" style="padding:0 20px;">
+				<span style="text-align:center;color:red;" id="msgError"></span>
+				<form id="loginForm">
+					<fieldset data-role="controlgroup">
+						<input required style="width:95%;background-color:white;" type="email" name="email" id="email" placeholder="<!email!>" autocapitalize="off" autocorrect="off"/>
+						<input required style="width:95%;background-color:white;" type="password" name="password" id="password" placeholder="<!password!>" style=""/>
+					</fieldset>
+					<input type="submit" data-theme="a" data-role="button" name="login" id="login" value="<!login!>"/>
+				</form>
+			</div>
+			</center>
+		</div>
+    </body>
+</html>

@@ -1,0 +1,286 @@
+﻿<!--***********************************************
+* システム名称: 検索表示サイト
+*　対象プラットフォーム: tablet
+*　モジュール名称: メインページ
+* 作成者：Syahir
+* Copyright(C) 2012 Japan Institute of Sports Sciences All Rights Reserved.
+***********************************************--> 
+<!DOCTYPE html>
+<html>
+    <head>
+<!--    	<script type="text/javascript" src="http://getfirebug.com/firebug-lite.js"></script> -->
+        <title><!pageTitle!></title>
+        <meta charset="UTF-8" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="format-detection" content="telephone=no"/>
+        <meta name='viewport' content='width=device-width; initial-scale=1; maximum-scale=1; user-scalable=no;' />
+		<link rel="apple-touch-icon-precomposed" href="/images/mobile-icon-57.png" />
+		<link rel="apple-touch-icon-precomposed" sizes="72x72"  href="/images/mobile-icon-72.png" />
+		<link rel="apple-touch-icon-precomposed" sizes="114x114"  href="/images/mobile-icon-114.png" />
+		<link rel="stylesheet" href="css/jquery.mobile-1.1.0.css" />
+		<link rel="stylesheet" href="css/jquery.mobile.tableview.css" />
+		<link rel="stylesheet" href="css/mobiscroll-2.0.custom.min.css" />
+		<link rel="stylesheet" href="css/glyphish.php" />
+		<style type="text/css">
+			#mainMenu .popover_triangle {right:7px;}
+			#mainMenu {
+				color: black;
+				display:none;
+				font-weight: normal;
+				line-height: 1;
+				cursor: auto;
+				position: absolute;
+			  	top:55px;
+			  	right:10px;
+				background-color: black;
+				z-index:5000000;
+				border: 3px solid black;
+				border-radius: 5px;
+				-webkit-border-radius: 5px;
+				-moz-border-radius: 5px;
+				border-radius: 5px;
+				-webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+				-webkit-transition: opacity 0.25s linear;
+				-moz-box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+				-moz-transition: opacity 0.25s linear;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+				transition: opacity 0.25s linear; 
+			}
+			
+			#mainMenu > .popover_triangle {
+			  position: absolute;
+			  top: -34px;
+			  font-size: 0px;
+			  line-height: 0%;
+			  width: 0px;
+			  border-top: 16px solid rgba(0,0,0,0);
+			  border-left: 16px solid rgba(0,0,0,0);
+			  border-right: 16px solid rgba(0,0,0,0);
+			  border-bottom: 16px solid black; 
+			}
+			#mainMenu > .content {
+			  width: 190px;
+			  overflow-x: hidden;
+			  overflow-y: hidden;
+			}
+			
+			.ui-dialog .ui-header, 
+			.ui-dialog .ui-content, .ui-dialog-contain,
+			.ui-dialog .ui-footer { 
+				max-width: 700px; 
+			}
+			
+			.ui-field-contain label.ui-input-text, .ui-field-contain label.ui-select {
+				width: 90% !important;
+				display:block;
+			}
+			
+			.ui-field-contain input.ui-input-text, .ui-field-contain textarea.ui-input-text, .ui-field-contain .ui-select {
+				width: 55% !important;
+				display:inline-block;
+			}
+			
+			.ui-field-contain .comment {
+				width: 35% !important;
+				display:inline-block;
+				margin-left: 5px;
+				font-size:smaller;
+			}
+			
+			#rowTotal {
+				display:block;
+			}
+			
+			#searchCond {
+				font-size: x-small;
+				display:block;
+			}
+			
+			.ui-btn-up-f {
+				border: 1px solid 		#ccc /*{c-bup-border}*/;
+				background: 			#eee /*{c-bup-background-color}*/;
+				font-weight: bold;
+				color: 					#222 /*{c-bup-color}*/;
+				text-shadow: 0 /*{c-bup-shadow-x}*/ 1px /*{c-bup-shadow-y}*/ 0 /*{c-bup-shadow-radius}*/ #ffffff /*{c-bup-shadow-color}*/;
+				background-image: -webkit-linear-gradient( #FFFFFF /*{c-bup-background-start}*/, #FFFFFF /*{c-bup-background-end}*/); /* Chrome 10+, Saf5.1+ */
+				background-image:    -moz-linear-gradient( #FFFFFF /*{c-bup-background-start}*/, #FFFFFF /*{c-bup-background-end}*/); /* FF3.6 */
+				background-image:     -ms-linear-gradient( #FFFFFF /*{c-bup-background-start}*/, #FFFFFF /*{c-bup-background-end}*/); /* IE10 */
+				background-image:      -o-linear-gradient( #FFFFFF /*{c-bup-background-start}*/, #FFFFFF /*{c-bup-background-end}*/); /* Opera 11.10+ */
+				background-image:         linear-gradient( #FFFFFF /*{c-bup-background-start}*/, #FFFFFF /*{c-bup-background-end}*/);
+				background-image: -webkit-gradient(linear, left top, left bottom, from( #FFFFFF /*{c-bup-background-start}*/), to( #FFFFFF /*{c-bup-background-end}*/)); /* Saf4+, Chrome */
+			}
+		</style>
+		<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="?action=lang.js"></script>
+		<script type="text/javascript" src="js/jquery.mobile-1.1.0.min.js"></script>
+		<script type="text/javascript" src="js/jquery.mobile.tableview.js"></script>
+		<script type="text/javascript" src="js/iscroll.js"></script>
+		<!-- <:datebox:> -->
+		<script type="text/javascript" src="js/mobiscroll-2.0.custom.min.js"></script>
+		<script type="text/javascript" src="js/jstorage.js"></script>
+		<script type="text/javascript" src="js/jquery.base64.js"></script>
+		<script type="text/javascript" src="?action=lang.js"></script>
+		<script type="text/javascript" src="js/functions.js"></script>
+		<script type="text/javascript" src="js/tablet.index.js"></script>
+    </head>
+    <body id="root">
+    	<div data-role="page" id="entry">
+			<div data-role="header">
+				<a href="#newentry" id="newEntryBtn" data-icon="plus" data-transition="slidedown"><!addnewentry!></a>
+				<h1><:name:></h1>
+				<a href="#" id="menu" data-icon="grid"><!menu!></a>
+			</div><!-- /header -->
+			<div data-role="content">
+				<div class="content-primary">
+					<div id="mainContent"></div>
+					<!-- <ul id="mainGrid" data-inset="true"></ul> -->
+				</div>
+			</div><!-- /content -->
+			<div data-role="footer" data-id="entry">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#" id="prevPage" data-icon="arrow-l"><!prev!></a></li>
+						<li><div id="resetSearch"><h4 style="text-align:center;margin:.5em;"><span id="rowTotal"></span><span id="searchCond"></span></h4></div></li>
+						<li><a href="#" id="nextPage" data-icon="arrow-r"><!next!></a></li>
+					</ul>
+				</div>
+			</div><!-- /footer -->
+		</div>
+		
+		<div data-role="page" id="search">
+			<div data-role="header">
+				<h1><!search!></h1>
+			</div><!-- /header -->
+			<div data-role="content">
+				<form id="searchForm">
+					<div data-role="fieldcontain">
+						<label for="dateFrom"><!from!></label>
+						<input name="dateFrom" id="dateFrom" type="date" data-role="datebox" data-options='{"mode": "flipbox","clickEvent":"click"}'>
+					</div>
+					<div data-role="fieldcontain">
+						<label for="dateTo"><!to!></label>
+						<input name="dateTo" id="dateTo" type="date" data-role="datebox" data-options='{"mode": "flipbox","clickEvent":"click"}'>
+					</div>
+				</form>
+				<div class="ui-body ui-body-b">
+					<fieldset class="ui-grid-a">
+						<div class="ui-block-a"><a href="#" data-role="button" data-theme="c" id="" data-icon="delete" data-rel="back"><!cancel!></a></div>
+						<div class="ui-block-b"><a href="#" data-role="button" data-theme="b" id="searchBtn" data-icon="search"><!search!></a></div>
+				    </fieldset>
+				</div>
+			</div><!-- /content -->
+		</div>
+		
+		<div data-role="page" id="newentry" data-rel="dialog">
+			<div data-role="header">
+				<a href="#entry" data-rel="back" data-direction="reverse"><!back!></a>
+				<h1><!addnewentry!></h1>
+			</div><!-- /header -->
+			<div data-role="content">
+				<form id="entryEditorFrm"></form>
+				<div class="ui-body ui-body-b">
+					<fieldset class="ui-grid-a">
+						<div class="ui-block-a"><a href="#" data-role="button" data-theme="c" data-icon="delete" data-rel="back"><!cancel!></a></div>
+						<div class="ui-block-b"><a href="#" data-role="button" data-theme="b" id="saveBtn" data-icon="plus"><!save!></a></div>
+				    </fieldset>
+				</div>
+			</div><!-- /content -->
+		</div>
+		
+		<div data-role="page" id="editentry" data-rel="dialog">
+			<div data-role="header">
+				<h1><!editentry!></h1>
+			</div><!-- /header -->
+			<div data-role="content">
+				<form id="edtEntryEditorFrm"></form>
+				<div class="ui-body ui-body-b">
+					<fieldset class="ui-grid-b">
+						<div class="ui-block-a"><a href="#" data-role="button" data-theme="c" data-icon="delete" data-rel="back"><!cancel!></a></div>
+						<div class="ui-block-b"><a href="#" data-role="button" data-theme="c" id="delBtn" data-icon="minus"><!delete!></a></div>
+						<div class="ui-block-c"><a href="#" data-role="button" data-theme="b" id="saveEdtBtn" data-icon="check"><!save!></a></div>
+				    </fieldset>
+				</div>
+			</div><!-- /content -->
+		</div>
+		
+		<div data-role="page" id="graph">
+			<div data-role="header">
+				<a href="#entry" data-rel="back" data-direction="reverse"><!back!></a>
+				<h1><!graph!></h1>
+			</div><!-- /header -->
+			<div data-role="content" style="text-align:center;">
+				<form id="graphEditorFrm">
+						<table style="border-collapse:collapse;border:none !important;" cellspacing="0" >
+						<tbody style="border:none !important;">
+							<tr>
+								<td style="width:50%; text-align:center; border:none !important;">
+									<div data-role="fieldcontain">
+									<label for="graphDateFrom"><!from!></label>
+									<input name="from" id="graphDateFrom" type="date" data-role="datebox" data-options='{"mode": "flipbox","clickEvent":"click"}'>
+									</div>
+								</td>
+								<td style="width:50%; text-align:center; border:none !important;">
+									<div data-role="fieldcontain">
+									<label for="graphDateTo"><!to!></label>
+									<input name="to" id="graphDateTo" type="date" data-role="datebox" data-options='{"mode": "flipbox","clickEvent":"click"}'>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td style="width:60%; text-align:center; border:none !important;">
+									<div data-role="fieldcontain">
+									<label for="graphSubject" class="select"><!subject!></label><select name="field" data-theme="c" id="graphSubject"></select>
+									</div>
+								</td>
+								<td style="width:40%; text-align:center; border:none !important;">
+									<a href="#" class="g-line-chart" data-role="button" data-theme="b" id="showGraphBtn" data-icon="custom"><!showgraph!></a>
+								</td>
+							</tr>
+						</tbody>
+						</table>
+					</form>
+				<div class="ui-body ui-body-c">
+				<img id="graphImg" src="images/placeholder.png" style="max-width:100%; height:auto;">
+				</div>
+			</div><!-- /content -->
+		</div>
+		
+		<div data-role="page" id="changepassword">
+			<div data-role="header">
+				<h1><!password!></h1>
+			</div><!-- /header -->
+			<div data-role="content" style="text-align:center;">
+				<form id="passwordFrm">
+					<div data-role="fieldcontain">
+						<label for="currPass"><!currpass!></label>
+						<input name="currpass" id="currPass" type="password">
+					</div>
+					<div data-role="fieldcontain">
+						<fieldset data-role="controlgroup">
+							<legend><!newpass!></legend>
+							<input name="newpass" id="newPass" type="password">
+							<input name="newpass2" id="newpass2" type="password">
+						</fieldset>
+					</div>
+				</form>
+				<div class="ui-body ui-body-b">
+					<fieldset class="ui-grid-a">
+						<div class="ui-block-a"><a href="#" data-role="button" data-theme="c" data-icon="delete" data-rel="back"><!cancel!></a></div>
+						<div class="ui-block-b"><a href="#" class="g-line-chart" data-role="button" data-theme="b" id="submitPass" data-icon="custom"><!submit!></a></div>
+				    </fieldset>
+				</div>
+			</div><!-- /content -->
+		</div>
+		
+		<div id="mainMenu">
+			<div class="popover_triangle"></div> 
+			<div class="content" data-role="controlgroup">
+				<a id="menuSearch" class='g-magnify' href="#search" data-rel="dialog" data-role="button" data-icon="custom" data-theme="c" data-transition="slidedown"><!search!></a>		
+				<a id="menuGraph" class='g-line-chart' href="#graph" data-role="button" data-icon="custom" data-theme="c" data-transition="slide"><!graph!></a>
+				<a id="menuPassword" class='g-user' href="#changepassword" data-rel="dialog" data-role="button" data-icon="custom" data-theme="c" data-transition="slidedown"><!password!></a>		
+				<a id="menuLogout" class='g-lock' href="#" data-role="button" data-icon="custom" data-theme="e"><!logout!></a>		
+		    </div>
+		 </div>
+    </body>
+</html>

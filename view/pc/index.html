@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<!--
+/****************
+ * System name: TransBox
+ * Module: Main template file
+ * Functional overview: This file contains HTML code for index 
+ * Last update: 2012/10/27
+ * Author： Artakus
+ * © 2012 Artakus. All Rights Reserved. GPL
+ * *************/
+-->
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title><!pageTitle!></title>
+        <link rel="stylesheet" type="text/css" href="css/gray/easyui.css"><!-- CSS for  easyui framework-->
+        <link rel="stylesheet" type="text/css" href="css/icon.css"><!-- CSS for basic icon -->
+        <link rel="stylesheet" type="text/css" href="css/icons.php"><!-- CSS for basic icon -->
+		<style type="text/css">
+			fieldset {
+				border-radius: 5px;
+			}
+			button.bigButton {
+				font-size: x-large;
+				border: solid 2px black;
+				border-radius: 5px;
+				margin: 5px;
+				padding: 3px;
+			}
+			button.bigButton:disabled {
+				border: solid 2px gray;
+			}
+			div.timecode {
+				font-size: xx-large;
+				font-weight: bold;
+				font-family: "Courier New", Courier, monospace;
+				text-align: center;
+			}
+			button.chapterButton {
+				font-size: large;
+				border: solid 1px black;
+				border-radius: 5px;
+				margin: 3px;
+				padding: 2px;
+			}
+			button.simpleButton {
+				border: 1px solid silver;
+			}
+		</style>
+        <script type="text/javascript" src="js/jquery-1.8.0.min.js"></script><!-- JS for jquery -->
+        <script type="text/javascript" src="js/jquery.easyui.min.js"></script><!-- JS for easyui framework -->
+		<script type="text/javascript" src="?action=lang.js"></script><!-- JS for lang JS  -->
+		<script type="text/javascript" src="js/md5.js"></script><!-- JS for md5 JS  -->
+		<script type="text/javascript" src="js/functions.js"></script><!-- JS for main JS function -->
+        <script type="text/javascript" src="js/index.js"></script><!-- JS for main JS -->
+    </head>
+    <body class="easyui-layout">
+        <div region="north" style="height:40px;padding:1px; overflow:hidden;overflow-y:hidden;overflow-x:hidden; background: url('images/northbg2.jpg');">
+            <table style="border-collapse:collapse;padding:0; width:100%;">
+                <tbody>
+                    <tr>
+                        <td align="left" valign="middle">
+                            <img src="images/cerdas7.png" height="35">
+                        </td>
+                        <td align="right" valign="middle">
+                        	<span id="name"><:name:></span>
+                        	<a href="#" iconCls="ff-cog" class="easyui-linkbutton" id="bt-setting"><!setting!></a>
+                            <a href="javascript:logout()" iconCls="ff-door-out" class="easyui-linkbutton" id="bt-logout"><!logout!></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div region="center" style="overflow:hidden;" border="false">
+        	<!--- main tab container --->
+			<div class="easyui-tabs" id="mainTabPanel" fit="true" border="false">
+				<!-- torrent tab -->
+        		<div title="<!torrent!>" class="easyui-layout">
+					<div region="center">
+						<table id="torrentTable"></table>
+						<div id="torrentTableTb">
+							<a href="#" id="torrentTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-add"></a>
+							<a href="#" id="torrentTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-delete"></a>
+							<a href="#" id="torrentTableStart" class="easyui-linkbutton" plain="true"  iconCls="ff-start"></a>
+							<a href="#" id="torrentTableStop" class="easyui-linkbutton" plain="true"  iconCls="ff-stop"></a>
+						</div>
+					</div>
+					<div region="east" style="width: 300px;">
+						
+					</div>
+        		</div>
+        		<!-- files tab -->
+        		<div title="<!files!>">
+        			
+        		</div>
+        		<!-- users tab -->
+				<div title="<!users!>">
+    				<table id="userTable"></table>
+    				<div id="userTableTb">
+    					<a href="#" id="userTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-user-add"></a>
+    					<a href="#" id="userTableEdit" class="easyui-linkbutton" plain="true" iconCls="ff-user-edit"></a>
+						<a href="#" id="userTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-user-delete"></a>
+    				</div>
+				</div>
+        	</div>
+        </div>
+    </body>
+</html>
