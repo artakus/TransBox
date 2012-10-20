@@ -21,89 +21,52 @@ if ($_POST) {
 		else
 			header("Location: index.php");
 	} else {
-		if (isset($_REQUEST['username']) && isset($_REQUEST['password'])) {
-			$username = $_REQUEST['username'];
-			$password = $_REQUEST['password'];
+		if (isset($_REQUEST['email']) && isset($_REQUEST['password'])) {
+			$email = $_REQUEST['email'];
+			$password = md5($_REQUEST['password']);
 			
-			$sql = "SELECT * FROM `movie_master`.`user` WHERE `username` = :username AND `status` > 0 LIMIT 1";
-			$sth = $dbS->prepare($sql);
+			$sql = "SELECT COUNT(`id`) FROM `users` WHERE `level` = 1";
+			$sth = $db->prepare($sql);
 			if (!$sth) {
-				onError("DB error: Invalid SQL",$dbS->errorInfo(),$sql);
+				onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 			}
-			if (!$sth->execute(compact("username"))) {
-				onError("DB error: Invalid SQL",$sth->errorInfo(),$sql);
+			if (!$sth->execute()) {
+				onError("DB error: Failed to retrive user data",$sth->errorInfo(),$sql);
 			}
-			$login = $sth->fetch(PDO::FETCH_ASSOC);
+			$count = $sth->fetchColumn(0);
 			
-			if (empty($login)) {
-				onError($lang['badlogin']);
+			if (!$count) {
+				$sql = "INSERT INTO `users` VALUES (NULL, :email,:password,1,0,0,0,0,0,0,0)";
+				$sth = $db->prepare($sql);
+				if (!$sth) {
+					onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
+				}
+				if (!$sth->execute(compact("email","password"))) {
+					onError("DB error: Failed to insert initial user data",$sth->errorInfo(),$sql);
+				}
 			}
 			
-			if ($password != $login['password']) {
-				onError($lang['badpassword']);
-			}
-			
-			$uid = $login['uid'];
-			
-			$sql = "SELECT `g`.`gid`, `g`.`groupname`,`gp`.`wm_root` FROM `movie_master`.`groups` AS `g`, `movie_master`.`affiliation` AS `a`, `gaspard`.`group` AS `gp` WHERE `a`.`uid` = :uid AND `a`.`rid` = 2 AND `a`.`gid` = `g`.`gid` AND `gp`.`gid` = `g`.`gid`";
-			
-			$sql2 = "SELECT * FROM `groups` AS `g`  WHERE `id` = :gid";
-			
-			$sth = $dbS->prepare($sql);
+			$sql = "SELECT * FROM `users` WHERE `email` = :email LIMIT 1";
+			$sth = $db->prepare($sql);
 			if (!$sth) {
-				onError("DB error: Invalid SQL",$dbS->errorInfo(),$sql);
+				onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 			}
-			if (!$sth->execute(compact("uid"))) {
-				onError("DB error: Failed to get affiliation data",$sth->errorInfo(),$sql);
+			if (!$sth->execute(compact("email"))) {
+				onError("DB error: Failed to retrive user data",$sth->errorInfo(),$sql);
 			}
-			
-			$sth2 = $dbC->prepare($sql2);
-			if (!$sth2) {
-				onError("DB error: Invalid SQL",$dbC->errorInfo(),$sql2);
-			}
-			
-			$cgroup = null;
-			$glogin = NULL;
-			while ($glogin = $sth->fetch()) {
-				if (empty($glogin)) {
-					onError("Invalid group");
+			$login = $sth->fetch();
+			if ($login) {
+				if ($login['password'] != $password) {
+					onError($lang['badpassword']);
 				}
-				
-				$gid = $glogin['gid'];
-				
-				if (!$sth2->execute(compact("gid"))) {
-					onError("DB error: Invalid SQL",$sth2->errorInfo(),$sql2);
-				}
-				$cgroup = $sth2->fetch();
-				if (empty($cgroup))
-					continue;
-				
-				break;
-			}
-			if (empty($cgroup)) {
-				onError("Group not exists, contact system administrator",null,null,$glogin);
-			}			
-			
-			$li = array();
-			$li['uid'] = intval($uid);
-			$li['username'] = $username;
-			$li['name'] = $login['f_name']." ".$login['g_name'];
-			
-			$li['gid'] = intval($gid);
-			$li['groupname'] = $glogin['groupname'];
-			$li['root'] = $glogin['wm_root'];
-			
-			$_SESSION['loggedin'] = TRUE;
-			$_SESSION['login'] = $li;
-			$_SESSION['token'] = '';
-			$_SESSION['encoderConnected'] = FALSE;
-			$_SESSION['last_action'] = time();
-			if (AJAX)
+				$_SESSION['loggedin'] = true;
+				$_SESSION['login'] = $login;
 				onOk("",array('loggedin'=>true));
-			else
-				header("Location: index.php");
+			} else {
+				onError($lang['nouser']);
+			}
 		} else {
-			onError($lang['nodata']);
+			onError("Insufficient data");
 		}
 	}
 } else {

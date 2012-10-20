@@ -77,7 +77,7 @@
 				<!-- torrent tab -->
         		<div title="<!torrent!>" class="easyui-layout">
 					<div region="center">
-						<table id="torrentTable"></table>
+						<table id="torrentTable" class="easyui-datagrid" toolbar="#torrentTableTb" fit="true" pagination="true"></table>
 						<div id="torrentTableTb">
 							<a href="#" id="torrentTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-add"></a>
 							<a href="#" id="torrentTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-delete"></a>
@@ -85,7 +85,7 @@
 							<a href="#" id="torrentTableStop" class="easyui-linkbutton" plain="true"  iconCls="ff-stop"></a>
 						</div>
 					</div>
-					<div region="east" style="width: 300px;">
+					<div region="east" style="width: 300px;" title="<!info!>" split="true">
 						
 					</div>
         		</div>
@@ -105,12 +105,11 @@
         	</div>
         </div>
     </body>
-</html>
 
     <div id="logindialog" class="easyui-dialog" title="<!login!>" iconCls="ff-door-in" modal="true" style="width: 250px;padding:5px;" buttons="#logindialogbtn">
     	<form id="logindialogfrm" action="index.php?action=login" method="post">
     		<fieldset>
-    			<legend><!username!></legend>
+    			<legend><!email!></legend>
     			<span class="combo"><input type="text" required="true" class="easyui-validatebox combo-text" style="width: 200px; ime-mode: disabled;" name="username" id="username" /></span>
     		</fieldset>
     		<fieldset>
@@ -126,3 +125,4 @@
     	</span>
     	<a href="#" id="login" class="easyui-linkbutton" icon="ff-tick"><!login!></a>
     </div>
+</html>

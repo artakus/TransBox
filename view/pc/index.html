@@ -16,7 +16,8 @@
         <title><!pageTitle!></title>
         <link rel="stylesheet" type="text/css" href="css/gray/easyui.css"><!-- CSS for  easyui framework-->
         <link rel="stylesheet" type="text/css" href="css/icon.css"><!-- CSS for basic icon -->
-        <link rel="stylesheet" type="text/css" href="css/icons.php"><!-- CSS for basic icon -->
+        <link rel="stylesheet" type="text/css" href="css/icons.php"><!-- CSS for famfam icon -->
+        <link rel="stylesheet" type="text/css" href="css/fileuploader.css"><!-- CSS for file upload -->
 		<style type="text/css">
 			fieldset {
 				border-radius: 5px;
@@ -52,6 +53,7 @@
         <script type="text/javascript" src="js/jquery.easyui.min.js"></script><!-- JS for easyui framework -->
 		<script type="text/javascript" src="?action=lang.js"></script><!-- JS for lang JS  -->
 		<script type="text/javascript" src="js/md5.js"></script><!-- JS for md5 JS  -->
+		<script type="text/javascript" src="js/fileuploader.js"></script><!-- JS for md5 JS  -->
 		<script type="text/javascript" src="js/functions.js"></script><!-- JS for main JS function -->
         <script type="text/javascript" src="js/index.js"></script><!-- JS for main JS -->
     </head>
@@ -76,19 +78,21 @@
         	<!--- main tab container --->
 			<div class="easyui-tabs" id="mainTabPanel" fit="true" border="false">
 				<!-- torrent tab -->
-        		<div title="<!torrent!>" class="easyui-layout">
-					<div region="center">
-						<table id="torrentTable"></table>
-						<div id="torrentTableTb">
-							<a href="#" id="torrentTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-add"></a>
-							<a href="#" id="torrentTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-delete"></a>
-							<a href="#" id="torrentTableStart" class="easyui-linkbutton" plain="true"  iconCls="ff-start"></a>
-							<a href="#" id="torrentTableStop" class="easyui-linkbutton" plain="true"  iconCls="ff-stop"></a>
+        		<div title="<!torrent!>">
+        			<div  class="easyui-layout" id="torrentLayout" fit="true">
+        				<div region="center">
+							<table id="torrentTable"></table>
+							<div id="torrentTableTb">
+								<a href="#" id="torrentTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-add"></a>
+								<a href="#" id="torrentTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-delete"></a>
+								<a href="#" id="torrentTableStart" class="easyui-linkbutton" plain="true"  iconCls="ff-start"></a>
+								<a href="#" id="torrentTableStop" class="easyui-linkbutton" plain="true"  iconCls="ff-stop"></a>
+							</div>
 						</div>
-					</div>
-					<div region="east" style="width: 300px;">
-						
-					</div>
+						<div region="east" style="width: 300px;" title="<!info!>" split="true">
+							
+						</div>
+        			</div>
         		</div>
         		<!-- files tab -->
         		<div title="<!files!>">
@@ -106,4 +110,27 @@
         	</div>
         </div>
     </body>
+	
+	<!-- add torrent dialog -->
+	<div id="addTorrentDialog" class="easyui-dialog" title="<!addtorrent!>" modal="true" closed="true" style="width: 400px;padding:5px;" buttons="#addTorrentDialogBtn">
+    	<form id="addTorrentDialogFrm">
+    		<fieldset>
+    			<legend><!url!></legend>
+    			<span class="combo"><input type="url" class="easyui-validatebox combo-text" style="width: 350px;" name="url" id="torrentUrl" /></span>
+    		</fieldset>
+    		<fieldset>
+    			<legend><!torrentfile!></legend>
+    			<div id="torrentFileUploader" style="height:40px; padding:2px; border: 1px dotted silver; margin-bottom: 3px; overflow: hidden;">
+
+    			</div>
+    			Drop torrent in box above or click <a href="#" id="selectTorrentFile" iconCls="ff-search-result" class="easyui-linkbutton" style="float: right;">Select torrent</a>
+    		</fieldset>
+    		<input type="submit" style="display: none;" value="submit">
+    	</form>
+    </div>
+    <div id="addTorrentDialogBtn" >
+    	<a href="#" id="addTorrentDialogBtnAdd" class="easyui-linkbutton" icon="ff-add"><!add!></a>
+    	<a href="#" id="addTorrentDialogBtnCnl" class="easyui-linkbutton" icon="ff-cancel"><!cancel!></a>
+    </div>
 </html>
+

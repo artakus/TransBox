@@ -89,6 +89,7 @@ if ($_POST) {
 	//}
 }
 spl_autoload_register(function ($class) {
-    require_once 'lib/'.strtr($class, '\\', '/') . '.php';
+	$dir = dirname(__FILE__);
+    require_once $dir.'/lib/'.strtr($class, '\\', '/') . '.php';
 });
 require_once 'actions/'.$action.".php";

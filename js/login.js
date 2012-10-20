@@ -16,7 +16,7 @@ $(function(){
 	$("#login").click(function(){
 		if ($("#logindialogfrm").form("validate")) {
 			$.post("index.php?action=login",{
-				username: $("#username").val(),
+				email: $("#username").val(),
 				password: $("#password").val()
 			},function(data){
 				if (processResponse(data)) {

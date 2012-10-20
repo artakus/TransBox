@@ -810,12 +810,15 @@ if (!Object.keys) {
     };
 }
 
-function modSchedHeight(){
-	var headHeight = 100;
-	var sch = document.getElementById("scheduler");
-	sch.style.height = (parseInt(document.body.offsetHeight)-headHeight)+"px";
+function readableFileSize(size) {
+    var units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    var i = 0;
+    while(size >= 1024) {
+        size /= 1024;
+        ++i;
+    }
+    return size.toFixed(1) + ' ' + units[i];
 }
-
 
 $.extend($.fn.datagrid.defaults.editors, {
 	timespinner: {

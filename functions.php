@@ -128,7 +128,7 @@ function viewHTML($obj = NULL) {
 		foreach ($obj as $k=>$v) {
 			$v = (string)$v;
 			if (is_string($v)) {
-				$pattern[$k] = "/<:{$k}:>/";
+				$pattern[$k] = "/<:".preg_quote($k,"/").":>/";
 				$replacement[$k] = $v;
 			}
 		}
@@ -136,7 +136,7 @@ function viewHTML($obj = NULL) {
 	}
 	foreach ($lang as $k=>$v) {
 		if (is_string($v)) {
-			$pattern[$k] = "/<!{$k}!>/";
+			$pattern[$k] = "/<!".preg_quote($k,"/")."!>/";
 			$replacement[$k] = $v;
 		}
 	}
