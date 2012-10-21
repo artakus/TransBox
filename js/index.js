@@ -208,7 +208,7 @@ $(function(){
 				align: "right",
 				sortable: true,
 				formatter: function(d,rd) {
-					return readableFileSize(rd.rx_current + rd.tx_current);
+					return readableFileSize(parseInt(rd.rx_current,10) + parseInt(rd.tx_current,10));
 				}
 			},{
 				field: "rx_limit",
@@ -287,6 +287,9 @@ $(function(){
 		},
 		onError: function(i,f,r) {
 			$.messager.alert(lang.error,r);
+		},
+		params: {
+			"_json": true
 		}
 	});
 	

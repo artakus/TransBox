@@ -42,7 +42,7 @@ while($r = $sth->fetch()) {
 	$uid = $r['id'];
 	$rx = $r['rx_current'];
 	$tx = $r['tx_current'];
-	$ds = get_dir_size($cfg['download_path']."/".md5($r['email']));
+	$ds = get_dir_size($cfg['download_path']."/".$r['id']);
 	
 	if (!$sth_t->execute(compact("uid"))) {
 		die(var_export($sth_t->errorInfo(),true));
@@ -82,6 +82,8 @@ while($r = $sth->fetch()) {
 
 
 function get_dir_size($dir_name){
+	if (!file_exists($dir_name))
+		return 0;
 	$ite=new RecursiveDirectoryIterator($dir_name);
 	$bytestotal=0;
 	foreach (new RecursiveIteratorIterator($ite) as $filename=>$cur) {

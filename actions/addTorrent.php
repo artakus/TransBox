@@ -18,13 +18,15 @@ $uid = $_SESSION['login']['id'];
 $download_path = $_SESSION['cfg']['download_path'];
 $save_path = $download_path."/".$_SESSION['login']['id'];
 
+$tmpdir = dirname(__FILE__)."/../tmp";
+
 $result = array();
 if (!empty($url)) {
 	$torrent = file_get_contents($url);
 	if (empty($torrent)) {
 		onError("Failed to fetch torrent file");
 	}
-	$tmp = "tmp/".rand_str(10).".torrent";
+	$tmp = $tmpdir."/".rand_str(10).".torrent";
 	file_put_contents($tmp, $torrent);
 	// to pass data through iframe you will need to encode all html tags
 	///echo htmlspecialchars(json_encode($result), ENT_NOQUOTES);
@@ -35,8 +37,8 @@ if (!empty($url)) {
 	$sizeLimit = 1 * 1024 * 1024;
 	$uploader = new qqFileUploader($allowedExtensions, $sizeLimit);
 	// Call handleUpload() with the name of the folder, relative to PHP's getcwd()
-	$result = $uploader->handleUpload('tmp/');
-	if ($result['success']) {
+	$result = $uploader->handleUpload($tmpdir.'/');
+	if (isset($result['success']) && $result['success']) {
 		$tmp = "tmp/".$uploader->getName();
 		$torrent = file_get_contents($tmp);
 		if (empty($torrent)) {
@@ -51,6 +53,8 @@ if (!empty($url)) {
 $t = new Torrent($tmp);
 $name = $t->name();
 $size = $t->size();
+$hash = $t->hash_info();
+var_dump($hash);
 $metainfo = base64_encode($torrent);
 $save_path = str_replace("//", "/", $save_path);
 $path = $save_path."/".$name;
@@ -105,24 +109,25 @@ if (!empty($param)) {
 }
 
 $addtorrent = $rpc->add_metainfo($torrent,$save_path,$param);
+
 if ($addtorrent->result == "success") {
 	$res = $addtorrent->arguments->torrent_added;
 	$tid = $res->id;
-	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, :name, :path, :size,0,0, NOW(), :metainfo)";
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, 0,:name,:hash, :path, :size,0,0, NOW(), :metainfo)";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 	}
-	if (!@$sth->execute(compact("uid","name","path","size","metainfo","tid"))) {
+	if (!@$sth->execute(compact("uid","name","path","size","metainfo","tid","hash"))) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);
 	}
+	var_dump($addtorrent);
 	onOk("",$result);
 } else {
-	if (isset($result['success']))
-		$result['success'] = FALSE;
-	onError("Failed to add torrent. ".$addtorrent->result,null,null,$result);
+	$result['success'] = FALSE;
+	onError("Failed to add torrent. ".$addtorrent->result,"Failed to add torrent. ".$addtorrent->result,null,$result);
 }
