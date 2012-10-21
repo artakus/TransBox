@@ -15,8 +15,6 @@ if (!defined("TRANSBOX")) {
 
 $page = isset($_REQUEST['page']) ? intval($_REQUEST['page']) : 1;
 $rows = isset($_REQUEST['rows']) ? intval($_REQUEST['rows']) : 20;
-$order =  isset($_REQUEST['order']) ? strtoupper(trim($_REQUEST['rows'])) : "ASC";
-$sort =  isset($_REQUEST['sort']) ? trim($_REQUEST['sort']) : 'id';
 
 
 $array = array('uid'=>$_SESSION['login']['id']);
@@ -25,8 +23,6 @@ if ($_SESSION['login']['level'] == 1) {
 	$w = "";
 	$array = array();
 }
-
-$dummy = array('total'=>0,'rows'=>array());
 
 $skip = ($page - 1) * $rows;
 
@@ -41,13 +37,10 @@ if (!$sth->execute($array)) {
 $total = intval($sth->fetchColumn(0));
 
 if ($total == 0) {
-	onOk("",$dummy);
+	onOk("");
 }
 
-$sql = "SELECT * FROM `torrents` {$w} ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
-if ($_SESSION['login']['level'] == 1) {
-	$sql = "SELECT `t`.*, `u`.`email` FROM `torrents` AS `t`, `users` AS `u` WHERE `t`.`uid` = `u`.`id` ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
-}
+$sql = "SELECT `id`,`tid` FROM `torrents` {$w} LIMIT {$skip},{$rows}";
 $sth = $db->prepare($sql);
 	if (!$sth) {
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$dummy);
@@ -64,7 +57,7 @@ while($row = $sth->fetch()) {
 }
 
 $rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
-$fields = array("id","percentDone","status","uploadRatio","rateDownload","rateUpload","isFinished");
+$fields = array("id","percentDone","status","uploadRatio","rateDownload","rateUpload");
 $torrent_list = $rpc->get($torrent_id,$fields);
 if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
 	$torrents_rpc = $torrent_list->arguments->torrents;
@@ -75,9 +68,8 @@ if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
 		$percentage = isset($trt->percentDone) ? $trt->percentDone: 0;
 		$up_speed = isset($trt->rateUpload) ? $trt->rateUpload : 0;
 		$down_speed = isset($trt->rateDownload) ? $trt->rateDownload : 0;
-		$finished = isset($trt->isFinished) ? $trt->isFinished : FALSE;
-		$torrents["_".$tid] = $torrents["_".$tid] + compact("status","ratio","percentage","up_speed","down_speed","finished");
+		$torrents["_".$tid] = $torrents["_".$tid] + compact("status","ratio","percentage","up_speed","down_speed");
 	}
 }
-$rows = array_values($torrents);
-onOk("",compact("rows","total"));
+$torrents = array_values($torrents);
+onOk("",compact("torrents"));

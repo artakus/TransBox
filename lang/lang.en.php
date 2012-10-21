@@ -55,8 +55,20 @@ $lang['add'] = "Add";
 $lang['url'] = "URL";
 $lang['torrentfile'] = "Torent file";
 $lang['percentage'] = "Percentage";
-$lang['torrentfile'] = "Torent file";
+$lang['autoreload'] = "Auto reload (every 5 seconds)";
 
+$lang['xferlimit'] = "Bandwidth limit";
+$lang['xfercurrent'] = "Bandwidth usage";
+$lang['rxlimit'] = "Download limit";
+$lang['rxcurrent'] = "Donwload usage";
+$lang['txlimit'] = "Upload limit";
+$lang['txcurrent'] = "Upload usage";
+$lang['dslimit'] = "Disk space limit";
+$lang['dscurrent'] = "Disk usage";
+
+$lang['tstatus'] = array(
+"Pause","Check pending","Checking","","Downloading","","Seeding","","Stopped"
+);
 
 $lang['sessTimeOut'] = "Session timed out. Please re-login";
 

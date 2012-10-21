@@ -811,6 +811,9 @@ if (!Object.keys) {
 }
 
 function readableFileSize(size) {
+	if (typeof size == "undefined")
+		return "";
+	size = parseInt(size,10);
     var units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     var i = 0;
     while(size >= 1024) {

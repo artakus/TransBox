@@ -18,6 +18,9 @@
         <link rel="stylesheet" type="text/css" href="css/icon.css"><!-- CSS for basic icon -->
         <link rel="stylesheet" type="text/css" href="css/icons.php"><!-- CSS for basic icon -->
 		<style type="text/css">
+			body{
+				font-family: "メイリオ",Segoe, sans-serif;
+			}
 			fieldset {
 				border-radius: 5px;
 			}
@@ -75,32 +78,13 @@
         	<!--- main tab container --->
 			<div class="easyui-tabs" id="mainTabPanel" fit="true" border="false">
 				<!-- torrent tab -->
-        		<div title="<!torrent!>" class="easyui-layout">
-					<div region="center">
-						<table id="torrentTable" class="easyui-datagrid" toolbar="#torrentTableTb" fit="true" pagination="true"></table>
-						<div id="torrentTableTb">
-							<a href="#" id="torrentTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-add"></a>
-							<a href="#" id="torrentTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-delete"></a>
-							<a href="#" id="torrentTableStart" class="easyui-linkbutton" plain="true"  iconCls="ff-start"></a>
-							<a href="#" id="torrentTableStop" class="easyui-linkbutton" plain="true"  iconCls="ff-stop"></a>
-						</div>
-					</div>
-					<div region="east" style="width: 300px;" title="<!info!>" split="true">
-						
-					</div>
+        		<div title="<!torrent!>">
         		</div>
         		<!-- files tab -->
         		<div title="<!files!>">
-        			
         		</div>
         		<!-- users tab -->
 				<div title="<!users!>">
-    				<table id="userTable"></table>
-    				<div id="userTableTb">
-    					<a href="#" id="userTableAdd" class="easyui-linkbutton" plain="true" iconCls="ff-user-add"></a>
-    					<a href="#" id="userTableEdit" class="easyui-linkbutton" plain="true" iconCls="ff-user-edit"></a>
-						<a href="#" id="userTableDel" class="easyui-linkbutton" plain="true"  iconCls="ff-user-delete"></a>
-    				</div>
 				</div>
         	</div>
         </div>

@@ -415,8 +415,10 @@ class TransmissionRPC
       throw new TransmissionRPCException( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
     if( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "401" )
       throw new TransmissionRPCException( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
-    elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" )
-      throw new TransmissionRPCException( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
+    elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" ) {
+    	unset($_SESSION['TransmissionSessionId']);
+    	throw new TransmissionRPCException( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
+    }
     
     return $this->return_as_array ? json_decode( $response, true ) : $this->cleanResultObject( json_decode( $response ) );	// Return the sanitized result
   }
@@ -437,6 +439,11 @@ class TransmissionRPC
     
     // Make sure it's blank/empty (reset)
     $this->session_id = null;
+	
+	if (isset($_SESSION['TransmissionSessionId']) && !empty($_SESSION['TransmissionSessionId'])) {
+		$this->session_id = $_SESSION['TransmissionSessionId'];
+		return $this->session_id;
+	}
     
     // Setup authentication (if provided)
     if ( $this->username && $this->password )
@@ -477,6 +484,7 @@ class TransmissionRPC
     } else {
       throw new TransmissionRPCException( "Unexpected response from Transmission RPC: ".$stream_meta['wrapper_data'][0] );
     }
+    $_SESSION['TransmissionSessionId'] = $this->session_id;
     return $this->session_id;
   }
   
@@ -502,7 +510,10 @@ class TransmissionRPC
     $this->return_as_array = $return_as_array;
     
     // Reset X-Transmission-Session-Id so we (re)fetch one
-    $this->session_id = null;
+    if (isset($_SESSION['TransmissionSessionId']) && !empty($_SESSION['TransmissionSessionId']))
+    	$this->session_id = $_SESSION['TransmissionSessionId'];
+	else
+    	$this->session_id = null;
   }
 }
 
