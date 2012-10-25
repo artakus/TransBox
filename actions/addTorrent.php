@@ -54,7 +54,6 @@ $t = new Torrent($tmp);
 $name = $t->name();
 $size = $t->size();
 $hash = $t->hash_info();
-var_dump($hash);
 $metainfo = base64_encode($torrent);
 $save_path = str_replace("//", "/", $save_path);
 $path = $save_path."/".$name;
@@ -70,6 +69,33 @@ if (!file_exists($save_path) || !is_dir($save_path)) {
 		onError("Failed to create user directory".$save_path,null,null,$result);
 	}
 	@chmod($save_path, 0777);
+}
+
+// try to check for duplication since transmission not support duplicate torrent
+$sql = "SELECT `tid` FROM `torrents` WHERE `hash` = :hash AND `duplicate` = 0 AND `uid` != :uid";
+$sth = $db->prepare($sql);
+if (!$sth) {
+	onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$result);
+}
+if (!$sth->execute(compact("hash","uid"))) {
+	onError("DB error: Failed to retrive torrent data",$sth->errorInfo(),$sql,$result);
+}
+$tid = intval($sth->fetchColumn(0));
+if ($tid) {
+	// just create new entry w/o adding to transmission, file will be copied later
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, 1,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
+	$sth = $db->prepare($sql);
+	if (!$sth) {
+		if (isset($result['success']))
+			$result['success'] = FALSE;
+		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
+	}
+	if (!@$sth->execute(compact("uid","name","path","size","metainfo","tid","hash"))) {
+		if (isset($result['success']))
+			$result['success'] = FALSE;
+		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);
+	}
+	onOk("",$result);
 }
   /**
    * Set properties on one or more torrents, available fields are:
@@ -113,7 +139,7 @@ $addtorrent = $rpc->add_metainfo($torrent,$save_path,$param);
 if ($addtorrent->result == "success") {
 	$res = $addtorrent->arguments->torrent_added;
 	$tid = $res->id;
-	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, 0,:name,:hash, :path, :size,0,0, NOW(), :metainfo)";
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, 0,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		if (isset($result['success']))
@@ -125,7 +151,6 @@ if ($addtorrent->result == "success") {
 			$result['success'] = FALSE;
 		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);
 	}
-	var_dump($addtorrent);
 	onOk("",$result);
 } else {
 	$result['success'] = FALSE;

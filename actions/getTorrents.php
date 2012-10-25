@@ -44,9 +44,9 @@ if ($total == 0) {
 	onOk("",$dummy);
 }
 
-$sql = "SELECT * FROM `torrents` {$w} ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
+$sql = "SELECT `id`,`uid`,`tid`,`name`,`size`,`txed`,`rxed`,`added_date`,`stopped` FROM `torrents` {$w} ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
 if ($_SESSION['login']['level'] == 1) {
-	$sql = "SELECT `t`.*, `u`.`email` FROM `torrents` AS `t`, `users` AS `u` WHERE `t`.`uid` = `u`.`id` ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
+	$sql = "SELECT `t`.`id`,`t`.`uid`,`t`.`tid`,`t`.`name`,`t`.`size`,`t`.`txed`,`t`.`rxed`,`t`.`added_date`, `u`.`email`, `t`.`stopped` FROM `torrents` AS `t`, `users` AS `u` WHERE `t`.`uid` = `u`.`id` ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
 }
 $sth = $db->prepare($sql);
 	if (!$sth) {
@@ -59,10 +59,13 @@ if (!$sth->execute($array)) {
 $torrents = array();
 $torrent_id = array();
 while($row = $sth->fetch()) {
-	$torrents["_".$row['tid']] = $row;
+	$torrents[] = $row;
 	$torrent_id[] = intval($row['tid']);
 }
 
+$torrent_id = array_unique($torrent_id);
+
+$t = array();
 $rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
 $fields = array("id","percentDone","status","uploadRatio","rateDownload","rateUpload","isFinished");
 $torrent_list = $rpc->get($torrent_id,$fields);
@@ -76,8 +79,12 @@ if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
 		$up_speed = isset($trt->rateUpload) ? $trt->rateUpload : 0;
 		$down_speed = isset($trt->rateDownload) ? $trt->rateDownload : 0;
 		$finished = isset($trt->isFinished) ? $trt->isFinished : FALSE;
-		$torrents["_".$tid] = $torrents["_".$tid] + compact("status","ratio","percentage","up_speed","down_speed","finished");
+		$t[(string)$tid] = compact("status","ratio","percentage","up_speed","down_speed","finished");
 	}
 }
+foreach ($torrents as $key => $value) {
+	$torrents[$key] = $value + $t[$value['tid']];
+}
+
 $rows = array_values($torrents);
 onOk("",compact("rows","total"));

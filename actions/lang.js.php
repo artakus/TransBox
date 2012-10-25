@@ -15,5 +15,6 @@ if (!defined("TRANSBOX")) {
 	
 header("Content-type: text/javascript");
 echo "var lang = ".json_encode($lang).";\n";
-echo "var isAdmin = ".(($_SESSION['login']['level'] == 1) ? "true":"false").";\n";
+if (isset($_SESSION['login']))
+	echo "var isAdmin = ".(($_SESSION['login']['level'] == 1) ? "true":"false").";\n";
 ?>

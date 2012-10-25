@@ -10,7 +10,10 @@
 var reloadTimer;
 
 function reloadTable(){
+	clearTimeout(reloadTimer);
 	if ($("#autoReload:checked").length == 0)
+		return;
+	if ($("#torrentTable").datagrid("getRows").length == 0)
 		return;
 	var options = $("#torrentTable").datagrid("options");
 	$.get("?action=getTorrentsStats",{
@@ -40,7 +43,39 @@ function reloadTable(){
 	reloadTimer = setTimeout("reloadTable()",5000);
 }
 
-
+function control(obj){
+		var $this = $(obj);
+		var id = parseInt($this.attr("tid"),10);
+		var tid = parseInt($this.attr("trid"),10);
+		var control = $this.attr("control");
+		var param = {
+			oper: control,
+			tid: JSON.stringify([tid]),
+			id: JSON.stringify([id])
+		}
+		switch(control) {
+			case "download":
+				break;
+			case "delete":
+				break;
+			case "start":
+				$.post("?action=setTorrent",param,function(data){
+					var res = processResponse(data);
+					if (!res)
+						return;
+					setTimeout('$("#torrentTable").datagrid("reload")',1000);
+				});
+				break;
+			case "stop":
+				$.post("?action=setTorrent",param,function(data){
+					var res = processResponse(data);
+					if (!res)
+						return;
+					setTimeout('$("#torrentTable").datagrid("reload")',5000);
+				});
+				break;
+		}
+}
 
 $(function(){
 	var torrentUploader;
@@ -64,11 +99,11 @@ $(function(){
 				title: lang.control,
 				width: 100,
 				align: "center",
-				formatter: function(d,ri,rd) {
-					return "<div style='padding-top:2px;'><img class='contolBtn' control='download' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/disk.png'>&nbsp;"+
-					"<img class='contolBtn' control='delete' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/delete.png'>&nbsp;"+
-					"<img class='contolBtn' control='start' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/play.png'>&nbsp;"+
-					"<img class='contolBtn' control='stop' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/stop.png'></div>";
+				formatter: function(d,rd) {
+					return "<div style='padding-top:2px;'><img class='control' control='download' tid='"+rd.id+"' trid='"+rd.tid+"' onclick='control(this)' src='css/famfam/disk.png'>&nbsp;"+
+					"<img class='control' control='delete' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/delete.png' onclick='control(this)'>&nbsp;"+
+					"<img class='control' control='start' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/play.png' onclick='control(this)'>&nbsp;"+
+					"<img class='control' control='stop' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/stop.png' onclick='control(this)'></div>";
 				}
 			},
 			{
@@ -107,6 +142,8 @@ $(function(){
 				width: 100,
 				align: "center",
 				formatter: function(d,rd){
+					if (parseInt(rd.stopped,10) == 1)
+						d = 0;
 					return "<span tid='"+rd.id+"' class='tStatus'>"+lang.tstatus[d]+"</span>";
 				}
 			},
@@ -159,7 +196,8 @@ $(function(){
 					return "<span tid='"+rd.id+"' class='tRatio'>0</span>";
 				}
 			}
-		]]
+		]],
+		onLoadSuccess: reloadTable
 	});
 	
 	
@@ -299,24 +337,6 @@ $(function(){
 			reloadTable();
 		} else {
 			clearTimeout(reloadTimer);
-		}
-	});
-	
-	$("img.controlBtn").live("click",function(){
-		var $this = $(this);
-		var id = $this.attr("tid");
-		var tid = $this.attr("trid");
-		var control = $this.attr("control");
-		
-		switch(control) {
-			case "download":
-				break;
-			case "delete":
-				break;
-			case "start":
-				break;
-			case "stop":
-				break;
 		}
 	});
 	

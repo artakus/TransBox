@@ -18,9 +18,9 @@ $rows = isset($_REQUEST['rows']) ? intval($_REQUEST['rows']) : 20;
 
 
 $array = array('uid'=>$_SESSION['login']['id']);
-$w = " WHERE `uid` = :uid ";
+$w = " WHERE `uid` = :uid AND `stopped` = 0";
 if ($_SESSION['login']['level'] == 1) {
-	$w = "";
+	$w = " WHERE `stopped` = 0";
 	$array = array();
 }
 
@@ -55,6 +55,7 @@ while($row = $sth->fetch()) {
 	$torrents["_".$row['tid']] = $row;
 	$torrent_id[] = intval($row['tid']);
 }
+$torrent_id = array_unique($torrent_id);
 
 $rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
 $fields = array("id","percentDone","status","uploadRatio","rateDownload","rateUpload");
