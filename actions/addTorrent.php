@@ -72,7 +72,7 @@ if (!file_exists($save_path) || !is_dir($save_path)) {
 }
 
 // try to check for duplication since transmission not support duplicate torrent
-$sql = "SELECT `tid` FROM `torrents` WHERE `hash` = :hash AND `duplicate` = 0 AND `uid` != :uid";
+$sql = "SELECT COUNT(`id`) FROM `torrents` WHERE `hash` = :hash AND `duplicate` = 0 AND `uid` != :uid";
 $sth = $db->prepare($sql);
 if (!$sth) {
 	onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$result);
@@ -80,17 +80,17 @@ if (!$sth) {
 if (!$sth->execute(compact("hash","uid"))) {
 	onError("DB error: Failed to retrive torrent data",$sth->errorInfo(),$sql,$result);
 }
-$tid = intval($sth->fetchColumn(0));
-if ($tid) {
+$count = intval($sth->fetchColumn(0));
+if ($count) {
 	// just create new entry w/o adding to transmission, file will be copied later
-	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, 1,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, 1,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 	}
-	if (!@$sth->execute(compact("uid","name","path","size","metainfo","tid","hash"))) {
+	if (!@$sth->execute(compact("uid","name","path","size","metainfo","hash"))) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);
@@ -138,15 +138,14 @@ $addtorrent = $rpc->add_metainfo($torrent,$save_path,$param);
 
 if ($addtorrent->result == "success") {
 	$res = $addtorrent->arguments->torrent_added;
-	$tid = $res->id;
-	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, :tid, 0,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, 0,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 	}
-	if (!@$sth->execute(compact("uid","name","path","size","metainfo","tid","hash"))) {
+	if (!@$sth->execute(compact("uid","name","path","size","metainfo","hash"))) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);

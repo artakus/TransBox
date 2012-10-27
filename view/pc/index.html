@@ -53,6 +53,10 @@
 			}
 			img.control {
 				cursor: pointer;
+				z-index: 1000;
+			}
+			img.fileicon {
+				vertical-align: middle;
 			}
 		</style>
         <script type="text/javascript" src="js/jquery-1.8.0.min.js"></script><!-- JS for jquery -->
@@ -64,21 +68,14 @@
         <script type="text/javascript" src="js/index.js"></script><!-- JS for main JS -->
     </head>
     <body class="easyui-layout">
-        <div region="north" style="height:40px;padding:1px; overflow:hidden;overflow-y:hidden;overflow-x:hidden; background: url('images/northbg2.jpg');">
-            <table style="border-collapse:collapse;padding:0; width:100%;">
-                <tbody>
-                    <tr>
-                        <td align="left" valign="middle">
-                            <img src="images/cerdas7.png" height="35">
-                        </td>
-                        <td align="right" valign="middle">
-                        	<span id="name"><:name:></span>
-                        	<a href="#" iconCls="ff-cog" class="easyui-linkbutton" id="bt-setting"><!setting!></a>
-                            <a href="javascript:logout()" iconCls="ff-door-out" class="easyui-linkbutton" id="bt-logout"><!logout!></a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div region="north" style="height:35px;padding:1px; overflow:hidden;overflow-y:hidden;overflow-x:hidden; background: url('images/northbg2.jpg');">
+        	<img src="images/TransBox.png">
+        	<div style="display: inline-block; float: right;padding: 3px;">
+        		<span id="name"><:name:></span>
+            	<a href="#" iconCls="ff-cog" class="easyui-linkbutton" id="bt-setting"><!setting!></a>
+                <a href="javascript:logout()" iconCls="ff-door-out" class="easyui-linkbutton" id="bt-logout"><!logout!></a>	
+        	</div>
+           	
         </div>
         <div region="center" style="overflow:hidden;" border="false">
         	<!--- main tab container --->
@@ -104,7 +101,21 @@
         		</div>
         		<!-- files tab -->
         		<div title="<!files!>">
-        			
+        			<div  class="easyui-layout" id="torrentLayout" fit="true">
+        				<div region="west" style="width: 300px;" title="<!folder!>" split="true">
+							<ul id="folderList" fit="true">
+								<li><span>/</span></li>
+							</ul>
+						</div>
+        				<div region="center">
+							<table id="fileTable"></table>
+							<div id="fileTableTb">
+								<a href="#" id="fileTableDL" class="easyui-linkbutton" plain="true"  iconCls="ff-disk"></a>
+								<a href="#" id="fileTableDel" class="easyui-linkbutton" plain="true" iconCls="ff-delete"></a>
+								<a href="#" id="fileTableZip" class="easyui-linkbutton" plain="true"  iconCls="ff-zip"></a>
+							</div>
+						</div>
+        			</div>
         		</div>
         		<!-- users tab -->
 				<div title="<!users!>">

@@ -13,8 +13,6 @@ if (!defined("TRANSBOX")) {
 	die("Forbidden");
 }
 
-$id = isset($_REQUEST['id']) ? json_decode($_REQUEST['id']) : NULL;
-$hash = isset($_REQUEST['hash']) ? json_decode($_REQUEST['hash']) : NULL;
 $uid = $_SESSION['login']['id'];
 $oper = isset($_REQUEST['oper']) ? strtolower(trim($_REQUEST['oper'])) : "";
 $download_path = $_SESSION['cfg']['download_path'];

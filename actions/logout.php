@@ -15,7 +15,9 @@ if (!defined("TRANSBOX")) {
 	
 
 //setLog("LOGOUT");
-session_unset();
-session_destroy();
+@session_regenerate_id(TRUE);
+@session_unset();
+@session_destroy();
 unset($_SESSION);
+@setcookie(session_name(),NULL);
 onOk();

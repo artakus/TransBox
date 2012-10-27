@@ -8,7 +8,8 @@
  * © 2012 Artakus. All Rights Reserved. GPL
  * *************/
 
-define("TRANSBOX",true); //application name heresession_start();
+define("TRANSBOX",true); //application name here
+ini_set("session.cookie_httponly", 1);session_start();
 require_once 'config.php';
 if ($debug) {
 	error_reporting(E_ALL);

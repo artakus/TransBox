@@ -25,7 +25,7 @@ $sql = "SELECT * FROM `users`";
 $sth = $db->query($sql);
 $sth_u = $db->prepare("UPDATE `users` SET `ds_current` = :ds, `rx_current` = :rx, `tx_current` = :tx WHERE `id` = :uid");
 
-$sql_t = "SELECT `id`,`tid`,`rxed`,`txed`,`percent` FROM `torrents` WHERE `uid` = :uid AND `stopped` = 0";
+$sql_t = "SELECT `id`,`hash`,`rxed`,`txed`,`percent` FROM `torrents` WHERE `uid` = :uid AND `stopped` = 0";
 $sth_t = $db->prepare($sql_t);
 if (!$sth_t) {
 	die(var_export($db->errorInfo(),true));
@@ -51,32 +51,34 @@ while($r = $sth->fetch()) {
 	$torrents = array();
 	$torrent_id = array();
 	while($row = $sth_t->fetch()) {
-		$torrents["_".$row['tid']] = $row;
-		$torrent_id[] = intval($row['tid']);
+		$torrents[$row['hash']] = $row;
+		$torrent_id[] = $row['hash'];
 	}
 	if (empty($torrents))
 		continue;
 	$torrent_id = array_unique($torrent_id);
-	$fields = array("id","uploadedEver","downloadedEver","percentDone");
-	$torrent_list = $rpc->get($torrent_id,$fields);
-	if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
-		$torrents_rpc = $torrent_list->arguments->torrents;
-		foreach ($torrents_rpc as $k=>$trt) {
-			$tid = $trt->id;
-			
-			$c_rxed = $torrents["_".$tid]['rxed'];
-			$c_txed = $torrents["_".$tid]['txed'];
-			$rxed = isset($trt->downloadedEver) ? $trt->downloadedEver : 0;
-			$txed = isset($trt->uploadedEver) ? $trt->uploadedEver: 0;
-			$percent = isset($trt->percentDone) ? $trt->percentDone: 0;
-			$rx += ($rxed - $c_rxed > 0) ? ($rxed - $c_rxed) : 0;
-			$tx += ($txed - $c_txed > 0) ? ($txed - $c_txed) : 0;
-			$id = $torrents["_".$tid]['id'];
-			if (!$sth_x->execute(compact("id","rxed","txed","percent"))) {
-				die(var_export($sth_x->errorInfo(),true));
+	if (!empty($torrent_id)) {
+		$fields = array("hashString","uploadedEver","downloadedEver","percentDone");
+		$torrent_list = $rpc->get($torrent_id,$fields);
+		if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
+			$torrents_rpc = $torrent_list->arguments->torrents;
+			foreach ($torrents_rpc as $k=>$trt) {
+				$hash = $trt->hashString;
+				$c_rxed = $torrents[$hash]['rxed'];
+				$c_txed = $torrents[$hash]['txed'];
+				$rxed = isset($trt->downloadedEver) ? $trt->downloadedEver : 0;
+				$txed = isset($trt->uploadedEver) ? $trt->uploadedEver: 0;
+				$percent = isset($trt->percentDone) ? $trt->percentDone: 0;
+				$rx += ($rxed - $c_rxed > 0) ? ($rxed - $c_rxed) : 0;
+				$tx += ($txed - $c_txed > 0) ? ($txed - $c_txed) : 0;
+				$id = $torrents[$hash]['id'];
+				if (!$sth_x->execute(compact("id","rxed","txed","percent"))) {
+					die(var_export($sth_x->errorInfo(),true));
+				}
 			}
-		}
+		}	
 	}
+	
 	$bind = compact("uid","ds","rx","tx");
 	var_dump($bind);
 	if (!$sth_u->execute($bind)) {
@@ -93,17 +95,22 @@ $sql = "SELECT
 			`torrents` AS `tt` 
 		WHERE 
 			`tt`.`duplicate` = 1 AND 
-			`tt`.`tid` = `t`.`tid` AND 
+			`tt`.`hash` = `t`.`hash` AND 
 			`t`.`duplicate` = 0 AND 
 			`t`.`percent` >= 1";
-$sql_u = "UPDATE `torrents` SET `duplicate` = 2 WHERE `id` = :id";
+$sql_u = "UPDATE `torrents` SET `duplicate` = :dup WHERE `id` = :id";
 $sth = $db->query($sql) or die(var_export($db->errorInfo(),true));
 $sth_u = $db->prepare($sql_u) or die(var_export($db->errorInfo(),true));
 while($r = $sth->fetch()) {
 	if (file_exists($r['pathfrom'])) {
+		$dup = 2;
+		if (!$sth_u->execute(compact("id","dup"))) {
+			die(var_export($sth_u->errorInfo(),true));
+		}
 		if(@copy($r['pathfrom'], $r['pathto'])) {
 			$id = $r['id'];
-			if (!$sth_u->execute(compact("id"))) {
+			$dup = 3;
+			if (!$sth_u->execute(compact("id","dup"))) {
 				die(var_export($sth_u->errorInfo(),true));
 			}
 		}

@@ -13,6 +13,8 @@ function reloadTable(){
 	clearTimeout(reloadTimer);
 	if ($("#autoReload:checked").length == 0)
 		return;
+	if (typeof $("#torrentTable").datagrid != "function")
+		return;
 	if ($("#torrentTable").datagrid("getRows").length == 0)
 		return;
 	var options = $("#torrentTable").datagrid("options");
@@ -44,37 +46,83 @@ function reloadTable(){
 }
 
 function control(obj){
-		var $this = $(obj);
-		var id = parseInt($this.attr("tid"),10);
-		var tid = parseInt($this.attr("trid"),10);
-		var control = $this.attr("control");
-		var param = {
-			oper: control,
-			tid: JSON.stringify([tid]),
-			id: JSON.stringify([id])
-		}
-		switch(control) {
-			case "download":
-				break;
-			case "delete":
-				break;
-			case "start":
-				$.post("?action=setTorrent",param,function(data){
-					var res = processResponse(data);
-					if (!res)
-						return;
-					setTimeout('$("#torrentTable").datagrid("reload")',1000);
-				});
-				break;
-			case "stop":
-				$.post("?action=setTorrent",param,function(data){
-					var res = processResponse(data);
-					if (!res)
-						return;
-					setTimeout('$("#torrentTable").datagrid("reload")',5000);
-				});
-				break;
-		}
+	var $this = $(obj);
+	var id = parseInt($this.attr("tid"),10);
+	var hash = $this.attr("hash");
+	var control = $this.attr("control");
+	var param = {
+		oper: control,
+		hash: JSON.stringify([hash]),
+		id: JSON.stringify([id])
+	}
+	switch(control) {
+		case "download":
+			$.post("?action=setTorrent",param,function(data){
+				var res = processResponse(data);
+				if (!res)
+					return;
+				if (typeof res.url != "undefined" && res.url.length > 0) {
+					window.open(res.url,"_blank");
+				}
+			});
+			break;
+		case "delete":
+			break;
+		case "start":
+			$.post("?action=setTorrent",param,function(data){
+				var res = processResponse(data);
+				if (!res)
+					return;
+				setTimeout('$("#torrentTable").datagrid("reload")',1000);
+			});
+			break;
+		case "stop":
+			$.post("?action=setTorrent",param,function(data){
+				var res = processResponse(data);
+				if (!res)
+					return;
+				setTimeout('$("#torrentTable").datagrid("reload")',5000);
+			});
+			break;
+	}
+}
+
+function fileControl(obj){
+	var $this = $(obj);
+	var path = $this.attr("path");
+	var control = $this.attr("control");
+	var param = {
+		path: path
+	}
+	switch(control) {
+		case "download":
+			$.post("?action=download",param,function(data){
+				var res = processResponse(data);
+				if (!res)
+					return;
+				if (typeof res.url != "undefined" && res.url.length > 0) {
+					window.open(res.url,"_blank");
+				}
+			});
+			break;
+		case "delete":
+			break;
+		case "zip":
+			$.messager.progress({
+				title: "Zip folder",
+				msg: "Zipping the folder",
+				text: "Please wait..."
+			});
+			timeOut = 120000;
+			$.post("?action=zip",param,function(data){
+				var res = processResponse(data);
+				if (!res)
+					return;
+				setTimeout('$("#fileTable").datagrid("reload")',500);
+				timeOut = 10000;
+			});
+			break;
+	}
 }
 
 $(function(){
@@ -89,6 +137,7 @@ $(function(){
 		toolbar: "#torrentTableTb",
 		checkOnSelect: false,
 		singleSelect: true,
+		pageList: [20,50,100],
 		columns:[[
 			{
 				field: "id",
@@ -100,10 +149,10 @@ $(function(){
 				width: 100,
 				align: "center",
 				formatter: function(d,rd) {
-					return "<div style='padding-top:2px;'><img class='control' control='download' tid='"+rd.id+"' trid='"+rd.tid+"' onclick='control(this)' src='css/famfam/disk.png'>&nbsp;"+
-					"<img class='control' control='delete' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/delete.png' onclick='control(this)'>&nbsp;"+
-					"<img class='control' control='start' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/play.png' onclick='control(this)'>&nbsp;"+
-					"<img class='control' control='stop' tid='"+rd.id+"' trid='"+rd.tid+"' src='css/famfam/stop.png' onclick='control(this)'></div>";
+					return "<div style='padding-top:2px;'><img class='control' control='download' tid='"+rd.id+"' hash='"+rd.hash+"' onclick='control(this)' src='css/famfam/disk.png'>&nbsp;"+
+					"<img class='control' control='delete' tid='"+rd.id+"' hash='"+rd.hash+"' src='css/famfam/delete.png' onclick='control(this)'>&nbsp;"+
+					"<img class='control' control='start' tid='"+rd.id+"' hash='"+rd.hash+"' src='css/famfam/play.png' onclick='control(this)'>&nbsp;"+
+					"<img class='control' control='stop' tid='"+rd.id+"' hash='"+rd.hash+"' src='css/famfam/stop.png' onclick='control(this)'></div>";
 				}
 			},
 			{
@@ -200,85 +249,151 @@ $(function(){
 		onLoadSuccess: reloadTable
 	});
 	
-	
-	$("#userTable").datagrid({
-		url: "?action=getUsers",
+	$("#fileTable").datagrid({
+		url: "?action=getFiles",
 		method: "get",
 		striped: true,
 		pagination: true,
 		fit: true,
-		toolbar: "#userTableTb",
+		toolbar: "#fileTableTb",
 		checkOnSelect: false,
 		singleSelect: true,
+		pageList: [30,50,100],
 		columns:[[
+			{ 	field: "path",
+				checkbox: true
+			},
 			{
-				field: "email",
-				title: lang.email,
-				width: 300,
+				field: "control",
+				title: lang.control,
+				width: 100,
+				align: "center",
+				sortable: false,
+				formatter: function(d,rd) {
+					if (rd.icon == "folder") {
+						return "<div style='padding-top:2px;'><img class='control' control='delete' path='"+rd.fullpath+"' src='css/famfam/delete.png' onclick='fileControl(this)'>&nbsp;"+
+						"<img class='control' control='zip' path='"+rd.fullpath+"' src='css/famfam/page_white_compressed.png' onclick='fileControl(this)'></div>";
+					} else {
+						return "<div style='padding-top:2px;'><img class='control' control='delete' path='"+rd.fullpath+"' src='css/famfam/delete.png' onclick='fileControl(this)'>&nbsp;"+
+						"<img class='control' control='download' path='"+rd.fullpath+"' onclick='fileControl(this)' src='css/famfam/disk.png'></div>";
+					}
+					
+				}
+			},
+			{
+				field: "name",
+				title: lang.name,
+				width: 500,
 				align: "left",
+				sortable: true,
+				formatter: function(d,rd) {
+					return "<img src='css/famfam/"+rd.icon+".png' class='fileicon'>&nbsp;"+d;
+				}
+			},
+			{
+				field: "type",
+				title: lang.type,
+				width: 100,
+				align: "center",
 				sortable: true
 			},
 			{
-				field: "ds_limit",
-				title: lang.dslimit,
+				field: "size",
+				title: lang.size,
 				width: 100,
 				align: "right",
 				sortable: true,
-				formatter: readableFileSize
-			},{
-				field: "ds_current",
-				title: lang.dscurrent,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: readableFileSize
-			},{
-				field: "xfer_limit",
-				title: lang.xferlimit,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: readableFileSize
-			},{
-				field: "xfer_current",
-				title: lang.xfercurrent,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: function(d,rd) {
-					return readableFileSize(parseInt(rd.rx_current,10) + parseInt(rd.tx_current,10));
+				formatter: function(d,rd){
+					if (rd.icon=="folder")
+						return "";
+					return readableFileSize(d);
 				}
-			},{
-				field: "rx_limit",
-				title: lang.rxlimit,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: readableFileSize
-			},{
-				field: "rx_current",
-				title: lang.rxcurrent,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: readableFileSize
-			},{
-				field: "tx_limit",
-				title: lang.txlimit,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: readableFileSize
-			},{
-				field: "tx_current",
-				title: lang.txcurrent,
-				width: 100,
-				align: "right",
-				sortable: true,
-				formatter: readableFileSize
 			}
 		]]
 	});
+	
+	if (isAdmin) {
+		$("#userTable").datagrid({
+			url: "?action=getUsers",
+			method: "get",
+			striped: true,
+			pagination: true,
+			fit: true,
+			toolbar: "#userTableTb",
+			checkOnSelect: false,
+			singleSelect: true,
+			pageList: [30,50,100],
+			columns:[[
+				{
+					field: "email",
+					title: lang.email,
+					width: 300,
+					align: "left",
+					sortable: true
+				},
+				{
+					field: "ds_limit",
+					title: lang.dslimit,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				},{
+					field: "ds_current",
+					title: lang.dscurrent,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				},{
+					field: "xfer_limit",
+					title: lang.xferlimit,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				},{
+					field: "xfer_current",
+					title: lang.xfercurrent,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: function(d,rd) {
+						return readableFileSize(parseInt(rd.rx_current,10) + parseInt(rd.tx_current,10));
+					}
+				},{
+					field: "rx_limit",
+					title: lang.rxlimit,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				},{
+					field: "rx_current",
+					title: lang.rxcurrent,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				},{
+					field: "tx_limit",
+					title: lang.txlimit,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				},{
+					field: "tx_current",
+					title: lang.txcurrent,
+					width: 100,
+					align: "right",
+					sortable: true,
+					formatter: readableFileSize
+				}
+			]]
+		});
+	}
+
 	
 	$("#torrentTableAdd").click(function(){
 		$("#addTorrentDialogFrm").get(0).reset();
@@ -371,6 +486,25 @@ $(function(){
 	
 	$("#addUserDialogBtnCnl").click(function(){
 		$("#addUserDialog").dialog("close");
+	});
+	
+	$("#folderList").tree({
+		loader: function(param,success,error) {
+			$.get("?action=getFolder",param,function(data){
+				var res = processResponse(data);
+				if (!res) {
+					error();
+					return;
+				}
+				success(res.folders);					
+			});
+			return true;
+		},
+		onClick: function(node){
+			$("#fileTable").datagrid("load", {
+				path: node.id
+			});
+		}
 	});
 	
 	

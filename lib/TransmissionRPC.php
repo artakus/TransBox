@@ -416,7 +416,7 @@ class TransmissionRPC
     if( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "401" )
       throw new TransmissionRPCException( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
     elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" ) {
-    	unset($_SESSION['TransmissionSessionId']);
+    	@unlink(sys_get_temp_dir()."/transmission_session_id");
     	throw new TransmissionRPCException( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
     }
     
@@ -440,8 +440,9 @@ class TransmissionRPC
     // Make sure it's blank/empty (reset)
     $this->session_id = null;
 	
-	if (isset($_SESSION['TransmissionSessionId']) && !empty($_SESSION['TransmissionSessionId'])) {
-		$this->session_id = $_SESSION['TransmissionSessionId'];
+	$id = FALSE;
+	if ($id = @file_get_contents(sys_get_temp_dir()."/transmission_session_id") && !empty($id)) {
+		$this->session_id = $id;
 		return $this->session_id;
 	}
     
@@ -484,7 +485,7 @@ class TransmissionRPC
     } else {
       throw new TransmissionRPCException( "Unexpected response from Transmission RPC: ".$stream_meta['wrapper_data'][0] );
     }
-    $_SESSION['TransmissionSessionId'] = $this->session_id;
+    file_put_contents(sys_get_temp_dir()."/transmission_session_id", $this->session_id);
     return $this->session_id;
   }
   
@@ -510,8 +511,9 @@ class TransmissionRPC
     $this->return_as_array = $return_as_array;
     
     // Reset X-Transmission-Session-Id so we (re)fetch one
-    if (isset($_SESSION['TransmissionSessionId']) && !empty($_SESSION['TransmissionSessionId']))
-    	$this->session_id = $_SESSION['TransmissionSessionId'];
+    $id = FALSE;
+    if ($id = @file_get_contents(sys_get_temp_dir()."/transmission_session_id") && !empty($id))
+		$this->session_id = $id;
 	else
     	$this->session_id = null;
   }

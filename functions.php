@@ -39,74 +39,6 @@ function handleError($errno, $errstr, $errfile, $errline, array $errcontext)
 set_error_handler('handleError');
 
 /***
- * Genarate HTML output for tab.
- * @param array $obj [optional] Associate array which contains key/value.
- * @return string HTML for the module
- */
-function loadTab($module,$obj = NULL) {
-	global $vailableModules, $enabledModuleForAdmin,$enabledModule,$lang;
-	global $alisaDb, $gaspardDb, $smartDb;
-	if (file_exists("modules/".$module.".php")) {
-		require "modules/".$module.".php";
-		$html = ""; 
-		if (file_exists("modules/view/".$module."-tab.html")) {
-			$html = file_get_contents("modules/view/".$module."-tab.html");
-		}
-		$newHtml = $html;
-		if ($obj != NULL && is_array($obj)) {
-			$pattern = array();
-			$replacement = array();
-			foreach ($obj as $k=>$v) {
-				$v = (string)$v;
-				if (is_string($v)) {
-					$pattern[$k] = "/<:{$k}:>/";
-					$replacement[$k] = $v;
-				}
-			}
-			$newHtml = preg_replace($pattern, $replacement, $html);
-		}
-		$newHtml = preg_replace("/<:\w:>/", "", $newHtml);
-		return $newHtml;
-	} else {
-		return "Failed to load tab for ".$module;
-	}
-}
-
-/***
- * Genarate HTML output for dialog.
- * @param array $obj [optional] Associate array which contains key/value.
- * @return string HTML for the module
- */
-function loadDialog($module,$obj = NULL) {
-	global $vailableModules, $enabledModuleForAdmin,$enabledModule,$lang;
-	global $alisaDb, $gaspardDb, $smartDb;
-	if (file_exists("modules/".$module.".php")) {
-		require "modules/".$module.".php";
-		$html = ""; 
-		if (file_exists("modules/view/".$module."-dialog.html")) {
-			$html = file_get_contents("modules/view/".$module."-dialog.html");
-		}
-		$newHtml = $html;
-		if ($obj != NULL && is_array($obj)) {
-			$pattern = array();
-			$replacement = array();
-			foreach ($obj as $k=>$v) {
-				$v = (string)$v;
-				if (is_string($v)) {
-					$pattern[$k] = "/<:{$k}:>/";
-					$replacement[$k] = $v;
-				}
-			}
-			$newHtml = preg_replace($pattern, $replacement, $html);
-		}
-		$newHtml = preg_replace("/<:\w:>/", "", $newHtml);
-		return $newHtml;
-	} else {
-		return "Failed to load dialog for ".$module;
-	}
-}
-
-/***
  * Genarate HTML output for action.
  * @param array $obj [optional] Associate array which contains key/value.
  * @return 
@@ -145,48 +77,21 @@ function viewHTML($obj = NULL) {
 	die($newHtml);
 }
 
-/***
- * Process search result from SOAP response, and combine with annotation set from annotation server.
- * @param array $sceneBit
- * @param string $field
- * @return 
- */
-function processResult($sceneBit,$field) {
-	$e = array();
-	$f = explode(",", $field);
-	$j = 0;
-	foreach($sceneBit as $b) {
-		$c = $b->eventset;
-		$dd = array();
-		$dd['mid'] = $b->movieid;
-		$dd['annotationset'] = $b->annotationset;
-		$dd['starttime'] = $b->starttime;
-		$dd['endtime'] = $b->endtime;
-		$d = array();
-		$d['_data'] = $dd;
-		for ($i = 0; $i < count($c); $i = $i + 2) {
-			if (!in_array($c[$i], $f)) continue;
-			$d[$c[$i]] = $c[$i+1];
-		}
-		$e[] = $d;
-		$j++;
-	}
-	return $e;
-}
-
-/***
- * 
- * @param object $in
- * @param object $indent [optional]
- * @param object $from_array [optional]
- * @return 
- */
-
+ /***
+  * Escape character use in JSON
+  */
 function _escape($str)
 {
     return preg_replace("!([\b\t\n\r\f\"\\'])!", "\\\\\\1", $str);
 };
 
+/***
+ * Encode array into human readable JSON
+ * @param array $in
+ * @param int $indent [optional]
+ * @param bool $from_array [optional]
+ * @return string Readable JSON
+ */
 function json_readable_encode($in, $indent = 0, $from_array = false, $idt = "\t")
 {
     $_myself = __FUNCTION__;
@@ -253,135 +158,25 @@ function rand_str($length = 5, $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
     return $string;
 }
 
-/***
- * Update user online status. Must be call for every action.
- * @return void
+/**
+ * Encrypt a string
+ * @param string $string String to be encrypted
+ * @return string Encrypted string
  */
-function lastOnline(){
-	if (!isset($_SESSION['username']))
-		return;
-	global $alisaDb;
-	$sql = "INSERT INTO `onlineusers` VALUES ('{$_SESSION['username']}','".implode(",",$_SESSION['groups'])."',".time().")
-				ON DUPLICATE KEY
-			UPDATE `lastaccess` = ".time();
-	$alisaDb->exec($sql);
-}
-
-
 function encrypt($string) {
-	
+	$key = session_id().$_SERVER['REMOTE_ADDR']."gakki";
+	return base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, md5($key), $string, MCRYPT_MODE_CBC, md5(md5($key))));
 }
 
+/**
+ * Decrypt the encrypted string
+ * @param string $string Encrypted string
+ * @return string Original string
+ */
 function decrypt($string){
-	
+	$key = session_id().$_SERVER['REMOTE_ADDR']."gakki";
+	return rtrim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, md5($key), base64_decode($string), MCRYPT_MODE_CBC, md5(md5($key))), "\0");
 }
-
-
-
-/***
- * Set log function
- * @param string $cmd Command
- * @param string $arg Stringyfied JSON
- * @return bool TRUE if insert into DB properly
- */
-function setLog($cmd, $arg = "") {
-	if (is_object($arg))
-		$arg = json_encode($arg);
-	if (is_array($arg))
-		$arg = json_encode($arg);
-		
-	if (isset($_SESSION['username']))
-		$username = $_SESSION['username'];
-	else if (isset($_POST['username']))
-		$username = $_POST['username'];
-	else
-		$username = "not available";	
-		
-	if (isset($_SESSION['myguid']))
-		$myguid = $_SESSION['myguid'];
-	else if (isset($_POST['myguid']))
-		$myguid = $_POST['myguid'];
-	else
-		$myguid = "not available";	
-		 
-	return;
-	global $alisaDb;
-	$ip = isset($_SERVER["HTTP_X_FORWARDED_FOR"]) ? $_SERVER["HTTP_X_FORWARDED_FOR"] : $_SERVER["REMOTE_ADDR"];
-	if (strpos($ip,"unknown") !== false) {
-		$ip = $_SERVER["REMOTE_ADDR"];
-	}
-	
-	$sql = "INSERT INTO `log_manager` VALUES (NULL,:myguid,:username,NOW(),:sessid,:cmd,:ip,:uagent,:arg)";
-	$sth = $alisaDb->prepare($sql);
-	$arr = array();
-	$arr['myguid'] = $myguid;
-	$arr['username'] = $username;
-	$arr['sessid'] = session_id();
-	$arr['cmd'] = $cmd;
-	$arr['ip'] = $ip;
-	$arr['uagent'] = $_SERVER["HTTP_USER_AGENT"];
-	$arr['arg'] = $arg;
-	$res = @$sth->execute($arr);
-	return $res;
-}
-
-/***
- * Create and array of YYYY-MM date string based on given date range
- * @param int $fromMonth Start month
- * @param int $fromYear Start year
- * @param int $toMonth End month
- * @param int $toYear End year
- * @return array Array contains YYYY-MM
- */
-function createMonthRangeArray($fromMonth,$fromYear,$toMonth,$toYear) {
-	$y = $toYear - $fromYear;
-	$m = ($toMonth - $fromMonth)+1;
-	$t = ($y * 12) + $m;
-	
-	$a = array();
-	$year = $fromYear;
-	$month = $fromMonth;
-	for ($i=0; $i < $t; $i++) { 
-		$a[] = $year."-".str_pad($month, 2,"0",STR_PAD_LEFT) ;
-		$month++;
-		if ($month > 12) {
-			$year++;
-			$month = 1;
-		}
-	}
-	return $a;
-}
-
-
-/***
- * Create and array of YYYY-MM-DD date string based on given date range
- * @param string $strDateFrom Start date (in parsable format)
- * @param string $strDateTo End date (in parsable format)
- * @return array Array contains YYYY-MM-DD
- */
-function createDateRangeArray($strDateFrom,$strDateTo) {
-  // takes two dates formatted as YYYY-MM-DD and creates an
-  // inclusive array of the dates between the from and to dates.
-
-  // could test validity of dates here but I'm already doing
-  // that in the main script
-
-  $aryRange=array();
-
-  $iDateFrom=mktime(1,0,0,substr($strDateFrom,5,2),     substr($strDateFrom,8,2),substr($strDateFrom,0,4));
-  $iDateTo=mktime(1,0,0,substr($strDateTo,5,2),     substr($strDateTo,8,2),substr($strDateTo,0,4));
-
-  if ($iDateTo>=$iDateFrom) {
-    array_push($aryRange,date('Y-m-d',$iDateFrom)); // first entry
-
-    while ($iDateFrom<$iDateTo) {
-      $iDateFrom+=86400; // add 24 hours
-      array_push($aryRange,date('Y-m-d',$iDateFrom));
-    }
-  }
-  return $aryRange;
-}
-
 
 /***
  * Function to be called on any fatal error. It will die with JSON response.
@@ -454,69 +249,212 @@ function checkMailAddr($email)
 }
 
 /**
- * Function to create tcp client for CerdasCore
- * @param string Command to be sent to CerdasCore
- * @param array Data to be sent as with the command to CerdasCore
- * @return array Response from CerdasCore
+ * Process path into URL to be downloaded using Lighttpd Secure download module
+ * @param string $path Fullpath of the file
+ * @return string URL to be downloaded
  */
-function coreClient($host,$command, $data) {
-	global $cerdasCorePort;
-	
-	try {
-		$fp = @fsockopen("tcp://".$host, $cerdasCorePort, $errno, $errstr, 3);
-	} catch(exception $ex) {
-		return array('error'=>$ex->getMessage());
+function lighttpdSecDownload($path) {
+	$root =  $_SESSION['cfg']['download_path'];
+	if ($_SESSION['login']['level'] > 1) {
+		$root = $root."/".$_SESSION['login']['id'];	
 	}
-	if (!$fp) {
-		if(php_sapi_name() == 'cli' && empty($_SERVER['REMOTE_ADDR'])) {
-			return array('error'=>"Failed to create socket","etc"=>array('str'=> $errstr, 'no'=>$errno));
-		} else {
-			onError("Failed to create socket",array('str'=> $errstr, 'no'=>$errno));
-		}
+	if (!preg_match("/^".preg_quote($root,"/")."/", $path)) {
+		onError("Error: Invalid path");
+	}
+	if (file_exists($path)) {
+		// size
+		$secret = $_SESSION['cfg']['dl_secret'];
+	  	$uri_prefix = $_SESSION['cfg']['dl_prefix'];
+	  	
+		$f = preg_replace("/^".preg_quote(rtrim($_SESSION['cfg']['download_path'],"/ "),"/")."/", "", $path);
+		# current timestamp
+	  	$t = time();
+		$t_hex = sprintf("%08x", $t);
+	 	$m = md5($secret.$f.$t_hex);
+	  	# generate link
+	  	$url = $uri_prefix.$m."/".$t_hex.$f;
+		return $url;
 	} else {
-		$array = array(
-			'cmd'=>$command,
-			'token' => $_SESSION['token'],
-			'data' => $data
-		);
-		if (is_null($data)) {
-			unset($array['data']);
-		}
-		stream_set_timeout($fp,3);
-		$json = json_encode($array);
-	    fwrite($fp, $json);
-		$res = "";
-		stream_set_timeout($fp,3);
-		try {
-			while ($out = fgets($fp)) {
-				$res .= $out;
-				if (strlen(trim($out)) == 0) {
-					break;
-				}
-				if (feof($fp)) {
-					break;
-				}
-		    }
-		} catch (exception $ex) {
-			onError("Error connection",array('msg'=>$ex->getMessage()));
-		}
-	    fclose($fp);
-		$json = json_decode($res,TRUE);
-		if (is_null($json)) {
-			return array('error'=>"unknown",'ret'=>$res);
-		}
-		return $json;
+		onError("File Not found for download");
 	}
 }
 
 /**
- * Function to create async tcp client for CerdasCore
- * @param string Command to be sent to CerdasCore
- * @param array Data to be sent as with the command to CerdasCore
+ * Process path into URL to be downloaded using Apache2 Auth token module
+ * @param string $path Fullpath of the file
+ * @return string URL to be downloaded
  */
-function coreClientAsync($host,$command, $data) {
-	$dir = dirname(__FILE__);
-	$_SESSION['async'] = array('cmd'=> $command, 'data'=> $data);
-	$command = "/usr/bin/php -f ".$dir."/actions/asyncCoreClient.php ".$host." ".session_id();
-	exec("$command > /dev/null &");
+function authTokenDownload($path) {
+	if (!function_exists("apache_get_modules") ||  !in_array("mod_auth_token", apache_get_modules())) {
+		onError("Auth token module no available");
+	}
+	
+	$root =  $_SESSION['cfg']['download_path'];
+	if ($_SESSION['login']['level'] > 1) {
+		$root = $root."/".$_SESSION['login']['id'];	
+	}
+	if (!preg_match("/^".preg_quote($root,"/")."/", $path)) {
+		onError("Error: Invalid path");
+	}
+	if (file_exists($path)) {
+		// size
+		$secret = $_SESSION['cfg']['dl_secret'];
+	  	
+		$f = preg_replace("/^".preg_quote(rtrim($_SESSION['cfg']['download_path'],"/ "),"/")."/", "", $path);
+		$protectedPath = $_SESSION['cfg']['dl_prefix'];        // Same as AuthTokenPrefix
+		$ipLimitation =  $_SESSION['cfg']['use_ip_limitation'];                 // Same as AuthTokenLimitByIp
+		$hexTime = dechex(time());             // Time in Hexadecimal
+		$fileName = preg_replace("/^".preg_quote(rtrim($_SESSION['cfg']['download_path'],"/ "),"/")."/", "", $path);;    // The file to access
+		
+		// Let's generate the token depending if we set AuthTokenLimitByIp
+		if ($ipLimitation) {
+		  $token = md5($secret . $fileName . $hexTime . $_SERVER['REMOTE_ADDR']);
+		}
+		else {
+		  $token = md5($secret . $fileName. $hexTime);
+		}
+		
+		// We build the url
+		$url = $protectedPath . $token. "/" . $hexTime . $fileName;
+		return $url;
+	} else {
+		onError("File Not found for download");
+	}
+}
+
+/**
+ * Start download using Apache X-SendFile function
+ * @param string $path Fullpath of the file
+ */
+function xSendFileDownload($path) {
+	if (!function_exists("apache_get_modules") ||  !in_array("mod_xsendfile", apache_get_modules())) {
+		onError("X-Sendfile module no available");
+	}
+	$root = $_SESSION['cfg']['download_path'];
+	if ($_SESSION['login']['level'] > 1) {
+		$root = $root."/".$_SESSION['login']['id'];	
+	}
+	if (!preg_match("/^".preg_quote($root,"/")."/", $path)) {
+		onError("Error: Invalid path");
+	}
+	if (file_exists($path)) {
+		// size
+		$filesize = sprintf("%.0f",filesize($path));
+		$pi = pathinfo($path);
+		$file = $pi['filename'];
+		$fileExt = $pi['extension'];
+		$headerName = (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE"))
+			? preg_replace('/\./', '%2e', $file, substr_count($file, '.') - 1).".".$fileExt
+			: basename($path);
+		@header("Content-length: " . $filesize . "\n");
+		$fileExt = $pi['extension'];
+		$is_image = preg_match("#(jpg|gif|png)#",$fileExt);
+		if (!$is_image) {
+			@header("Content-type: application/octet-stream\n");
+			@header("Content-disposition: attachment; filename=\"".$headerName."\"\n");
+			@header("Accept-Ranges: bytes\n");
+		} else {
+			@header("Content-type: image/$fileExt\n");
+		}
+		// write the session to close so you can continue to browse on the site.
+		@session_write_close();
+		@header('X-Sendfile: '.$path);
+		exit();
+	} else {
+		onError("File Not found for download");
+	}
+}
+
+
+/**
+ * Start download using PHP fopen function
+ * @param string $path Fullpath of the file
+ */
+function phpDownloadFile($path) {
+	$root =  $_SESSION['cfg']['download_path'];
+	if ($_SESSION['login']['level'] > 1) {
+		$root = $root."/".$_SESSION['login']['id'];	
+	}
+	// we need to strip slashes twice in some circumstances
+	// Ex.	If we are trying to download test/tester's file/test.txt
+	// $down will be "test/tester\\\'s file/test.txt"
+	// one strip will give us "test/tester\'s file/test.txt
+	// the second strip will give us the correct
+	//	"test/tester's file/test.txt"
+	if (!preg_match("/^".preg_quote($root,"/")."/", $path)) {
+		onError("Error: Invalid path");
+	}
+
+	if (file_exists($path)) {
+		// size
+		$filesize = sprintf("%.0f",filesize($path));
+		$pi = pathinfo($path);
+		$file = $pi['filename'];
+		$fileExt = $pi['extension'];
+		// filenames in IE containing dots will screw up the filename
+		$headerName = (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE"))
+			? preg_replace('/\./', '%2e', $file, substr_count($file, '.') - 1).".".$fileExt
+			: basename($path);
+		// partial or full ?
+		$bufsize = 32768;
+		if (isset($_SERVER['HTTP_RANGE'])) {
+			// Partial download
+
+			if (preg_match("/^bytes=(\\d+)-(\\d*)$/D", $_SERVER['HTTP_RANGE'], $matches)) {
+				$from = $matches[1];
+				$to = $matches[2];
+				if (empty($to))
+					$to = $filesize - 1;
+				$content_size = $to - $from + 1;
+				@header("HTTP/1.1 206 Partial Content");
+				@header("Content-Range: $from - $to / $filesize");
+				@header("Content-Length: $content_size");
+				@header("Content-Type: application/octet-stream");
+				@header("Content-Disposition: attachment; filename=\"".$headerName."\"");
+				@header("Content-Transfer-Encoding: binary");
+				// write the session to close so you can continue to browse on the site.
+				@session_write_close();
+				$fh = fopen($path, "rb");
+				fseek($fh, $from);
+				$cur_pos = ftell($fh);
+				while ($cur_pos !== FALSE && ftell($fh) + $bufsize < $to + 1) {
+					$buffer = fread($fh, $bufsize);
+					echo $buffer;
+					$cur_pos = ftell($fh);
+				}
+				$buffer = fread($fh, $to + 1 - $cur_pos);
+				echo $buffer;
+				fclose($fh);
+			} else {
+				@header("HTTP/1.1 500 Internal Server Error");
+				onError("Donwload error");				
+			}
+		} else {
+			// standard download
+			@header("Content-transfer-encoding: binary\n");
+			@header("Content-length: " . $filesize . "\n");
+			$is_image = preg_match("#(jpg|gif|png)#",$fileExt);
+			if (!$is_image) {
+				@header("Content-type: application/octet-stream\n");
+				@header("Content-disposition: attachment; filename=\"".$headerName."\"\n");
+				@header("Accept-Ranges: bytes\n");
+			} else {
+				@header("Content-type: image/$fileExt\n");
+			}
+			// write the session to close so you can continue to browse on the site.
+			@session_write_close();
+			set_time_limit(0);
+			$file = @fopen($path,"rb");
+			while(!feof($file))
+			{
+				print(@fread($file, $bufsize));
+				ob_flush();
+				flush();
+			}
+			fclose($file);
+		}
+		exit();
+	} else {
+		onError("File Not found for download");
+	}
 }

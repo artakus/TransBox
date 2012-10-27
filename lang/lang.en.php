@@ -60,11 +60,13 @@ $lang['autoreload'] = "Auto reload (every 5 seconds)";
 $lang['xferlimit'] = "Bandwidth limit";
 $lang['xfercurrent'] = "Bandwidth usage";
 $lang['rxlimit'] = "Download limit";
-$lang['rxcurrent'] = "Donwload usage";
+$lang['rxcurrent'] = "Download usage";
 $lang['txlimit'] = "Upload limit";
 $lang['txcurrent'] = "Upload usage";
 $lang['dslimit'] = "Disk space limit";
 $lang['dscurrent'] = "Disk usage";
+$lang['folder'] = "Folder";
+$lang['type'] = "Type";
 
 $lang['tstatus'] = array(
 "Pause","Check pending","Checking","","Downloading","","Seeding","","Stopped"

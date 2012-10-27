@@ -40,7 +40,7 @@ if ($total == 0) {
 	onOk("");
 }
 
-$sql = "SELECT `id`,`tid` FROM `torrents` {$w} LIMIT {$skip},{$rows}";
+$sql = "SELECT `id`,`hash` FROM `torrents` {$w} LIMIT {$skip},{$rows}";
 $sth = $db->prepare($sql);
 	if (!$sth) {
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$dummy);
@@ -49,28 +49,36 @@ if (!$sth->execute($array)) {
 	onError("DB error: Failed to retrive torrent data",$sth->errorInfo(),$sql,$dummy);
 }
 
-$torrents = array();
+$t = array();
 $torrent_id = array();
 while($row = $sth->fetch()) {
-	$torrents["_".$row['tid']] = $row;
-	$torrent_id[] = intval($row['tid']);
+	$torrents[] = $row;
+	$torrent_id[] = $row['hash'];
 }
 $torrent_id = array_unique($torrent_id);
-
-$rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
-$fields = array("id","percentDone","status","uploadRatio","rateDownload","rateUpload");
-$torrent_list = $rpc->get($torrent_id,$fields);
-if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
-	$torrents_rpc = $torrent_list->arguments->torrents;
-	foreach ($torrents_rpc as $k=>$trt) {
-		$tid = $trt->id;
-		$status = isset($trt->status) ? $trt->status : 0;
-		$ratio = isset($trt->uploadRatio) ? $trt->uploadRatio: 0;
-		$percentage = isset($trt->percentDone) ? $trt->percentDone: 0;
-		$up_speed = isset($trt->rateUpload) ? $trt->rateUpload : 0;
-		$down_speed = isset($trt->rateDownload) ? $trt->rateDownload : 0;
-		$torrents["_".$tid] = $torrents["_".$tid] + compact("status","ratio","percentage","up_speed","down_speed");
+$t = array();#
+if (!empty($torrent_id)) {
+	$rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
+	$fields = array("hashString","percentDone","status","uploadRatio","rateDownload","rateUpload");
+	$torrent_list = $rpc->get($torrent_id,$fields);
+	if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
+		if (isset($torrent_list->arguments->torrents)) {
+			$torrents_rpc = $torrent_list->arguments->torrents;
+			foreach ($torrents_rpc as $k=>$trt) {
+				$hash = $trt->hashString;
+				$status = isset($trt->status) ? $trt->status : 0;
+				$ratio = isset($trt->uploadRatio) ? $trt->uploadRatio: 0;
+				$percentage = isset($trt->percentDone) ? $trt->percentDone: 0;
+				$up_speed = isset($trt->rateUpload) ? $trt->rateUpload : 0;
+				$down_speed = isset($trt->rateDownload) ? $trt->rateDownload : 0;
+				$t[$hash] = compact("status","ratio","percentage","up_speed","down_speed");
+			}
+		}
+		
 	}
+	foreach ($torrents as $key=>$value) {
+		$torrents[$key] = $value + $t[$value['hash']];
+	}
+	$torrents = array_values($torrents);	
 }
-$torrents = array_values($torrents);
 onOk("",compact("torrents"));
