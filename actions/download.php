@@ -18,40 +18,6 @@ if (empty($path)) {
 	onError("Error: Invalid path");
 }
 
-if ($_POST) {
-	$path = decrypt($path);
-	if (!file_exists($path)) {
-		onError("Error: File not exists");
-	}
-	if (is_dir($path)) {
-		onError("Error: Multiple files torrent detected. PLease download the file individually from the Files tab");
-	}
-	
-	$url = "";
-	if ($_SESSION['cfg']['use_lighttpd_secdownload']) {
-		$url = lighttpdSecDownload($path);			
-	} elseif($_SESSION['cfg']['use_apache_authtoken']) {
-		$url = authTokenDownload($path);
-	} elseif($_SESSION['cfg']['use_xsendfile']) {
-		$a = array('time'=> time(),'url'=>$path);
-		$url = "?action=download&path=".urlencode(encrypt(json_encode($a)));
-	} elseif($_SESSION['cfg']['use_symlink']) {
-		$md5 = md5($uid.time().$path);
-		$dirname = dirname(__FILE__).$_SESSION['cfg']['dl_prefix'].$md5;
-		if (!@mkdir($dirname)) {
-			onError("Failed to make temporary URL");
-		}
-		if (!@symlink($path, $dirname."/".basename($path))) {
-			onError("Failed to make temporary URL");
-		}
-		$url = $_SESSION['cfg']['dl_prefix'].$md5."/".basename($path);
-	} else {
-		$a = array('time'=> time(),'url'=>$path);
-		$url = "?action=download&path=".urlencode(encrypt(json_encode($a)));
-	}
-	onOk("",compact("url"));
-}
-
 $json = decrypt($path);
 $a = json_decode($json,TRUE);
 if (empty($a)) {

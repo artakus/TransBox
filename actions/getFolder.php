@@ -14,7 +14,6 @@ if (!defined("TRANSBOX")) {
 }
 
 $id = isset($_REQUEST['id']) ? trim($_REQUEST['id']) : "";
-$root =  $_SESSION['cfg']['download_path']."/";
 $folders = array();
 $path = "";
 if (!empty($id)) {
@@ -26,10 +25,11 @@ if (!empty($id)) {
 				'state'=>"closed"
 			);
 }
+$root =  $_SESSION['cfg']['download_path'];
 if ($_SESSION['login']['level'] > 1) {
 	$root = $root."/".$_SESSION['login']['id'];	
 }
-$realPath = $root."/".$path;
+$realPath = str_replace("//", "/", $root."/".$path);
 
 if (file_exists($realPath)) {
 	$di = new DirectoryIterator($realPath);

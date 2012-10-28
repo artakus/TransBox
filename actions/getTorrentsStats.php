@@ -77,7 +77,9 @@ if (!empty($torrent_id)) {
 		
 	}
 	foreach ($torrents as $key=>$value) {
-		$torrents[$key] = $value + $t[$value['hash']];
+		$hash = $value['hash'];
+		unset($value['hash']);
+		$torrents[$key] = $value + $t[$hash];
 	}
 	$torrents = array_values($torrents);	
 }

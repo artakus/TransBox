@@ -23,13 +23,13 @@ $dummy = array('total'=>0,'rows'=>array());
 
 $skip = ($page - 1) * $rows;
 
-$root =  $_SESSION['cfg']['download_path']."/";
+$root =  $_SESSION['cfg']['download_path'];
+if ($_SESSION['login']['level'] > 1) {
+	$root = $root."/".$_SESSION['login']['id'];	
+}
 $folders = array();
 if (!empty($path)) {
 	$path = decrypt($path);
-}
-if ($_SESSION['login']['level'] > 1) {
-	$root = $root.$_SESSION['login']['id'];	
 }
 $realPath = str_replace("//", "/", $root."/".$path);
 $files = array();
@@ -44,7 +44,7 @@ if (file_exists($realPath)) {
 			continue;
 		}
 		$n = $fileinfo->getFilename();
-		$fullpath = $fileinfo->getPathname();
+		$fullpath = str_replace($root, "", $fileinfo->getPathname());
 		if ($fileinfo->isDir()) {
 			$type[] = "<DIR>";
 			$size[] = 0;

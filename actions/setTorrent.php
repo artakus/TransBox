@@ -42,7 +42,7 @@ switch ($oper) {
 			onError("Error: File not exists");
 		}
 		if (is_dir($path)) {
-			onError("Error: Multiple files torrent detected. PLease download the file individually from the Files tab");
+			onError("Error: Multiple files torrent detected. Please download the file individually from the Files tab");
 		}
 		
 		$url = "";
@@ -63,6 +63,8 @@ switch ($oper) {
 				onError("Failed to make temporary URL");
 			}
 			$url = $_SESSION['cfg']['dl_prefix'].$md5."/".basename($path);
+			$a = array('time'=> time(),'url'=>$url);
+			$url = "?action=download&path=".urlencode(encrypt(json_encode($a)));
 		} else {
 			$a = array('time'=> time(),'url'=>$path);
 			$url = "?action=download&path=".urlencode(encrypt(json_encode($a)));
@@ -113,7 +115,7 @@ switch ($oper) {
 		$sql = "SELECT DISTINCT `hash` FROM `torrents` WHERE `duplicate` > 0 AND `hash` IN ('".implode("','", $hash)."')";
 		$sth = $db->query($sql);
 		if (!$sth) {
-			onError("DB Error: Failed to get torrent info");
+			onError("DB Error: Failed to get torrent info",$db->errorInfo(),$sql);
 		}
 		$duplicated = $sth->fetchAll(PDO::FETCH_COLUMN,0);
 		$del_id = array_diff($hash, $duplicated);
@@ -124,13 +126,13 @@ switch ($oper) {
 		}
 		$del_file = array_diff($hash, $del_id);
 		$w = "AND `uid` = {$uid}";
-		if ($_SESSION['login']['status'] == 1) {
+		if ($_SESSION['login']['level'] == 1) {
 			$w = "";
 		}
 		$sql = "SELECT DISTINCT `path` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `hash` IN ('".implode("','", $del_file)."') ".$w;
 		$sth = $db->query($sql);
 		if (!$sth) {
-			onError("DB Error: Failed to get torrent info");
+			onError("DB Error: Failed to get torrent info",$db->errorInfo(),$sql);
 		}
 		$failed_to_delete = array();
 		while ($r = $sth->fetch()) {
@@ -139,10 +141,10 @@ switch ($oper) {
 			}
 		}
 		if ($result) {
-			$sql = "SELECT DISTINCT `id`, `path`,`hash` FROM `torrents` WHERE `hash` IN ('".implode(",", $hash)."') AND `duplicate` > 0 GROUP BY `hash` ORDER BY `tid`";
+			$sql = "SELECT DISTINCT `id`, `path`,`hash` FROM `torrents` WHERE `hash` IN ('".implode(",", $hash)."') AND `duplicate` > 0 GROUP BY `hash` ORDER BY `id`";
 			$sth = $db->query($sql);
 			if (!$sth) {
-				onError("DB Error: Failed to get torrent info");
+				onError("DB Error: Failed to get torrent info",$db->errorInfo(),$sql);
 			}
 			$needtoupdate = array();
 			while($r = $sth->fetch()) {
@@ -154,14 +156,16 @@ switch ($oper) {
 				$needtoupdate[] = $r['id'];
 			}
 			
-			$sql = "DELETE FROM `torrents` WHERE `hash` IN (".implode(",", $hash).") AND `duplicate` = 0 AND `id` IN (".implode(",", $id).")";
+			$sql = "DELETE FROM `torrents` WHERE `hash` IN ('".implode("','", $hash)."') AND `duplicate` = 0 AND `id` IN (".implode(",", $id).")";
 			if (!$db->query($sql)) {
-				onError("DB Error: Failed to delete torrent from DB");
-			} 
-			$sql = "UPDATE `torrents` SET `duplicate` = 0 WHERE `id` IN (".implode(",", $needtoupdate).") AND `duplicate` > 0";
-			$sth = $db->query($sql);
-			if (!$sth) {
-				onError("DB Error: Invalid SQL",$db->errorInfo());
+				onError("DB Error: Failed to delete torrent from DB",$db->errorInfo(),$sql);
+			}
+			if (!empty($needtoupdate)) {
+				$sql = "UPDATE `torrents` SET `duplicate` = 0 WHERE `id` IN (".implode(",", $needtoupdate).") AND `duplicate` > 0";
+				$sth = $db->query($sql);
+				if (!$sth) {
+					onError("DB Error: Invalid SQL",$db->errorInfo());
+				}
 			}
 		}
 		$msg = (!empty($failed_to_delete) ? "Failed to delete following files: ".implode("\n", $failed_to_delete) : "");

@@ -36,7 +36,7 @@ if ($_POST) {
 			$count = $sth->fetchColumn(0);
 			
 			if (!$count) {
-				$sql = "INSERT INTO `users` VALUES (NULL, :email,:password,1,0,0,0,0,0,0,0)";
+				$sql = "INSERT INTO `users` VALUES (NULL, :email,:password,1,0,0,0,0,0,0,0,0,0,0)";
 				$sth = $db->prepare($sql);
 				if (!$sth) {
 					onError("DB error: Invalid SQL",$db->errorInfo(),$sql);

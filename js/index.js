@@ -25,6 +25,7 @@ function reloadTable(){
 		var res = processResponse(data,true);
 		if (!res) {
 			$.messager.show({
+				title: "Warning",
 				msg: "Failed to get torrent stats",
 				timeout: 2000
 			});
@@ -67,8 +68,27 @@ function control(obj){
 			});
 			break;
 		case "delete":
+			$.messager.confirm("Delete file","Are you sure want to delete this torrent? The torrent data will be also deleted",function(r){
+				if (r) {
+					$this.attr("src","images/snake.gif");
+					$.post("?action=setTorrent",param,function(data){
+						var res = processResponse(data);
+						if (!res)
+							return;
+						setTimeout('$("#torrentTable").datagrid("reload")',500);
+						if (res.msg.length > 0) {
+							$.messager.show({
+								title: "Warning",
+								msg: res.msg,
+								timeout: 2000
+							});
+						}
+					});
+				}
+			});
 			break;
 		case "start":
+			$this.attr("src","images/snake.gif");
 			$.post("?action=setTorrent",param,function(data){
 				var res = processResponse(data);
 				if (!res)
@@ -77,6 +97,7 @@ function control(obj){
 			});
 			break;
 		case "stop":
+			$this.attr("src","images/snake.gif");
 			$.post("?action=setTorrent",param,function(data){
 				var res = processResponse(data);
 				if (!res)
@@ -92,11 +113,12 @@ function fileControl(obj){
 	var path = $this.attr("path");
 	var control = $this.attr("control");
 	var param = {
-		path: path
+		path: path,
+		oper: control
 	}
 	switch(control) {
 		case "download":
-			$.post("?action=download",param,function(data){
+			$.post("?action=setFile",param,function(data){
 				var res = processResponse(data);
 				if (!res)
 					return;
@@ -106,20 +128,41 @@ function fileControl(obj){
 			});
 			break;
 		case "delete":
+			$.messager.confirm("Delete file","Are you sure want to delete this file?",function(r){
+				if (r) {
+					$.post("?action=setFile",param,function(data){
+						var res = processResponse(data);
+						if (!res)
+							return;
+						setTimeout('$("#fileTable").datagrid("reload")',500);
+						if (res.msg.length > 0) {
+							$.messager.show({
+								title: "Warning",
+								msg: res.msg,
+								timeout: 2000
+							});
+						}
+					});
+				}
+			});
 			break;
 		case "zip":
-			$.messager.progress({
-				title: "Zip folder",
-				msg: "Zipping the folder",
-				text: "Please wait..."
-			});
-			timeOut = 120000;
-			$.post("?action=zip",param,function(data){
-				var res = processResponse(data);
-				if (!res)
-					return;
-				setTimeout('$("#fileTable").datagrid("reload")',500);
-				timeOut = 10000;
+			$.messager.confirm("Zip file","Are you sure want to zip this folder? It may take long time.",function(r){
+				if (r) {
+					$.messager.progress({
+						title: "Zip folder",
+						msg: "Zipping the folder",
+						text: "Please wait..."
+					});
+					timeOut = 120000;
+					$.post("?action=setFile",param,function(data){
+						var res = processResponse(data);
+						if (!res)
+							return;
+						setTimeout('$("#fileTable").datagrid("reload")',500);
+						timeOut = 10000;
+					});
+				}
 			});
 			break;
 	}
@@ -309,7 +352,27 @@ $(function(){
 					return readableFileSize(d);
 				}
 			}
-		]]
+		]],
+		onDblClickRow:function(ri,rd) {
+			var ft = $('#folderList');
+			var node = ft.tree('find', rd.fullpath);
+			if (node) {
+				ft.tree('expandTo', node.target);
+				ft.tree('select', node.target);
+			} else {
+				var r = ft.tree("getSelected");
+				if (r == null)
+					r = ft.tree("getRoot");
+				ft.tree("expand",r.target);
+				node = ft.tree('find', rd.fullpath);
+				if (node) {
+					ft.tree('select', node.target);
+				}
+			}
+			$("#fileTable").datagrid("load", {
+				path: rd.fullpath
+			});
+		}
 	});
 	
 	if (isAdmin) {
@@ -324,6 +387,17 @@ $(function(){
 			singleSelect: true,
 			pageList: [30,50,100],
 			columns:[[
+				{
+					field: "control",
+					title: lang.control,
+					width: 100,
+					align: "center",
+					formatter: function(d,rd) {
+						return "<div style='padding-top:2px;'><img class='control' control='reset' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/database_lightning.png'>&nbsp;"+
+						"<img class='control' control='delete' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/user_delete.png' onclick='control(this)'>&nbsp;"+
+						"<img class='control' control='edit' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/user_edit.png' onclick='control(this)'></div>";
+					}
+				},
 				{
 					field: "email",
 					title: lang.email,
@@ -466,7 +540,7 @@ $(function(){
 	});
 	
 	$("#userTableDel").click(function(){
-
+		
 	});
 	
 	$("#addUserDialogBtnAdd").click(function(){
@@ -520,7 +594,4 @@ $(function(){
 			}
 		}
 	});
-	if (!isAdmin) {
-		$("#mainTabPanel").tabs("close",2);
-	}
 });

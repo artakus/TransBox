@@ -15,34 +15,23 @@ if (!defined("TRANSBOX")) {
 
 $uid = $_SESSION['login']['id'];
 $oper = isset($_REQUEST['oper']) ? strtolower(trim($_REQUEST['oper'])) : "";
-$download_path = $_SESSION['cfg']['download_path'];
-$save_path = $download_path."/".$_SESSION['login']['id'];
-
-if (empty($id) || empty($hash) || empty($oper)) {
-	onError("Error: Insifficient data");
+$path = (isset($_REQUEST['path']) && trim($_REQUEST['path']) != "") ? trim($_REQUEST['path']) : "";
+if (empty($path) || empty($oper)) {
+	onError("Error: Insufficient data");
 }
-$hash = array_unique($hash);
-$rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
+
+$root =  $_SESSION['cfg']['download_path'];
+if ($_SESSION['login']['level'] > 1) {
+	$root = $root."/".$_SESSION['login']['id'];	
+}
+$path = decrypt($path);
+$path = str_replace("//", "/", $root."/".$path);
+if (!file_exists($path)) {
+	onError("Error: File not exists".$path);
+}
+
 switch ($oper) {
 	case 'download':
-		$sql = "SELECT `path` FROM `torrents` WHERE `id` = :id AND `hash` = :hash LIMIT 1";
-		$sth = $db->prepare($sql);
-		if (!$sth) {
-			onError("DB Error: Failed to get torrent info".$db->errorInfo());
-		}
-		$id = $id[0];
-		$hash = $hash[0];
-		if (!$sth->execute(compact("id","hash"))) {
-			onError("DB Error: Failed to get torrent info from DB",$sth->errorInfo());
-		}
-		$path = $sth->fetchColumn(0);
-		if (!file_exists($path)) {
-			onError("Error: File not exists");
-		}
-		if (is_dir($path)) {
-			onError("Error: Multiple files torrent detected. PLease download the file individually from the Files tab");
-		}
-		
 		$url = "";
 		if ($_SESSION['cfg']['use_lighttpd_secdownload']) {
 			$url = lighttpdSecDownload($path);			
@@ -67,103 +56,41 @@ switch ($oper) {
 		}
 		onOk("",compact("url"));
 		break;
-	case 'stop':
-		$param = array();
-		$sql = "SELECT COUNT(`id`) AS `count`, `hash` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `stopped` = 0 GROUP BY `hash`";
-		$sth = $db->query($sql);
-		if (!$sth) {
-			onError("DB Error: Failed to get torrent info");
+	case 'zip':
+		$zip = new ZipArchive();
+		$filename = $path.".zip";
+		if (file_exists($filename)) {
+			onError("Error: Zip file already exists, please delete the zip file first");
 		}
-		$tobestopped = array();
-		while ($r= $sth->fetch()) {
-			if ($r['count'] == 1) {
-				$tobestopped[] = $r['hash'];
-			}
+		if ($zip->open($filename, ZIPARCHIVE::CREATE)!==TRUE) {
+			onError("Error: Cannot create zip file");
 		}
-		$result = TRUE;
-		if (!empty($tobestopped)) {
-			$torrents_rpc = $rpc->stop($tobestopped);
-			$result = $torrents_rpc->result == "success";
-			if (!$result) {
-				onError("Transmission error: ".$torrents_rpc->result);
-			}
-		}
-		
-		if ($result) {
-			$sql = "UPDATE `torrents` SET `stopped` = 1 WHERE `id` IN (".implode(",", $id).")";
-			if (!$db->query($sql)) {
-				onError("DB Error: Failed to update torrent status");
-			}
-		}
-		break;
-	case 'start':
-		$param = array();
-		$torrents_rpc = $rpc->start($hash);
-		if ($torrents_rpc->result == "success") {
-			$sql = "UPDATE `torrents` SET `stopped` = 0 WHERE `id` IN (".implode(",", $id).")";
-			if (!$db->query($sql)) {
-				onError("DB Error: Failed to update torrent status");
-			}
-		}
+		@session_write_close();
+		set_time_limit(0);
+		folderToZip($path, $zip);
+		$zip->close();
 		break;
 	case 'delete':
-		$param = array();
-		$sql = "SELECT DISTINCT `hash` FROM `torrents` WHERE `duplicate` > 0 AND `hash` IN ('".implode("','", $hash)."')";
-		$sth = $db->query($sql);
-		if (!$sth) {
-			onError("DB Error: Failed to get torrent info");
-		}
-		$duplicated = $sth->fetchAll(PDO::FETCH_COLUMN,0);
-		$del_id = array_diff($hash, $duplicated);
-		$result = TRUE;
-		if (!empty($del_id)) {
-			$torrents_rpc = $rpc->remove($del_id,TRUE);
-			$result = $torrents_rpc->result == "success";	
-		}
-		$del_file = array_diff($hash, $del_id);
-		$w = "AND `uid` = {$uid}";
-		if ($_SESSION['login']['status'] == 1) {
-			$w = "";
-		}
-		$sql = "SELECT DISTINCT `path` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `hash` IN ('".implode("','", $del_file)."') ".$w;
-		$sth = $db->query($sql);
-		if (!$sth) {
-			onError("DB Error: Failed to get torrent info");
-		}
-		$failed_to_delete = array();
-		while ($r = $sth->fetch()) {
-			if (@unlink($r['path'])) {
-				$failed_to_delete[] = basename($r['path']);
-			}
-		}
-		if ($result) {
-			$sql = "SELECT DISTINCT `id`, `path`,`hash` FROM `torrents` WHERE `hash` IN ('".implode(",", $hash)."') AND `duplicate` > 0 GROUP BY `hash` ORDER BY `tid`";
-			$sth = $db->query($sql);
+		if ($_SESSION['login']['level'] > 1) {
+			$sql = "SELECT COUNT(*) FROM `torrents` WHERE `path` = :path AND `uid` = :uid";
+			$sth = $db->prepare($sql);
 			if (!$sth) {
-				onError("DB Error: Failed to get torrent info");
+				onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$result);
 			}
-			$needtoupdate = array();
-			while($r = $sth->fetch()) {
-				$hashes = $r['$hash'];
-				$torrents_rpc = $rpc->set($hashes,array('location'=>dirname($r['path'])));
-				if ($torrents_rpc->result != "success") {
-					onError("Failed to delete torrent");
-				}
-				$needtoupdate[] = $r['id'];
+			if (!$sth->execute(compact("path","uid"))) {
+				onError("DB error: Failed to retrive torrent data",$sth->errorInfo(),$sql,$result);
 			}
-			
-			$sql = "DELETE FROM `torrents` WHERE `hash` IN (".implode(",", $hash).") AND `duplicate` = 0 AND `id` IN (".implode(",", $id).")";
-			if (!$db->query($sql)) {
-				onError("DB Error: Failed to delete torrent from DB");
-			} 
-			$sql = "UPDATE `torrents` SET `duplicate` = 0 WHERE `id` IN (".implode(",", $needtoupdate).") AND `duplicate` > 0";
-			$sth = $db->query($sql);
-			if (!$sth) {
-				onError("DB Error: Invalid SQL",$db->errorInfo());
+			if (intval($sth->fetchColumn(0)) > 0) {
+				onError("Error: ".basename($path)." is related to torrent file. Please delete as Torrents tab instead");
+			}
+			if (!@unlink($path)) {
+				onError("Error: Failed to delete ".basename($path).". Please verify if it related to any torrent");
+			}
+		} else {
+			if (!@unlink($path)) {
+				onError("Error: Failed to delete ".basename($path).". Please verify if it related to any torrent");
 			}
 		}
-		$msg = (!empty($failed_to_delete) ? "Failed to delete following files: ".implode("\n", $failed_to_delete) : "");
-		onOk($msg);
 		break;
 	
 	default:
@@ -171,3 +98,36 @@ switch ($oper) {
 		break;
 }
 onOk();
+
+
+
+function folderToZip($folder, &$zipFile, $subfolder = null) {
+    if ($zipFile == null) {
+        // no resource given, exit
+        return false;
+    }
+    // we check if $folder has a slash at its end, if not, we append one
+    $sp = str_split($folder);
+    $folder .= end($sp) == "/" ? "" : "/";
+	$spb=str_split($subfolder);
+    $subfolder .= end($spb) == "/" ? "" : "/";
+    // we start by going through all files in $folder
+    $handle = opendir($folder);
+    while ($f = readdir($handle)) {
+        if ($f != "." && $f != "..") {
+            if (is_file($folder . $f)) {
+                // if we find a file, store it
+                // if we have a subfolder, store it there
+                if ($subfolder != null)
+                    $zipFile->addFile($folder . $f, $subfolder . $f);
+                else
+                    $zipFile->addFile($folder . $f);
+            } elseif (is_dir($folder . $f)) {
+                // if we find a folder, create a folder in the zip
+                $zipFile->addEmptyDir($f);
+                // and call the function again
+                folderToZip($folder . $f, $zipFile, $f);
+            }
+        }
+    }
+}

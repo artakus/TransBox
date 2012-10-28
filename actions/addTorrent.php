@@ -54,7 +54,6 @@ $t = new Torrent($tmp);
 $name = $t->name();
 $size = $t->size();
 $hash = $t->hash_info();
-$metainfo = base64_encode($torrent);
 $save_path = str_replace("//", "/", $save_path);
 $path = $save_path."/".$name;
 @unlink($tmp);
@@ -83,14 +82,14 @@ if (!$sth->execute(compact("hash","uid"))) {
 $count = intval($sth->fetchColumn(0));
 if ($count) {
 	// just create new entry w/o adding to transmission, file will be copied later
-	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, 1,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, 1,:name,:hash, :path, :size,0,0,0,0, NOW())";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 	}
-	if (!@$sth->execute(compact("uid","name","path","size","metainfo","hash"))) {
+	if (!@$sth->execute(compact("uid","name","path","size","hash"))) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);
@@ -138,14 +137,14 @@ $addtorrent = $rpc->add_metainfo($torrent,$save_path,$param);
 
 if ($addtorrent->result == "success") {
 	$res = $addtorrent->arguments->torrent_added;
-	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, 0,:name,:hash, :path, :size,0,0,0,0, NOW(), :metainfo)";
+	$sql = "INSERT INTO `torrents` VALUES (NULL, :uid, 0,:name,:hash, :path, :size,0,0,0,0, NOW())";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 	}
-	if (!@$sth->execute(compact("uid","name","path","size","metainfo","hash"))) {
+	if (!@$sth->execute(compact("uid","name","path","size","hash"))) {
 		if (isset($result['success']))
 			$result['success'] = FALSE;
 		onError("DB error: Failed to insert torrent data to DB",$sth->errorInfo(),$sql,$result);

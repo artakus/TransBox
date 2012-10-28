@@ -27,7 +27,7 @@ $dummy = array('total'=>0,'rows'=>array());
 
 $skip = ($page - 1) * $rows;
 
-$sql = "SELECT COUNT(*) FROM `users` WHERE `level` = 2";
+$sql = "SELECT COUNT(*) FROM `users`";
 $sth = $db->prepare($sql);
 if (!$sth) {
 	onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$dummy);
@@ -41,7 +41,7 @@ if ($total == 0) {
 	onOk("",$dummy);
 }
 
-$sql = "SELECT * FROM `users` WHERE `level` = 2 ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
+$sql = "SELECT * FROM `users` ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
 $sth = $db->prepare($sql);
 	if (!$sth) {
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$dummy);
