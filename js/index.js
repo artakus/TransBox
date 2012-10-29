@@ -497,10 +497,16 @@ $(function(){
 		$("#addTorrentDialog").dialog("close");
 	});
 	
+	$("#addTorrentDialog").dialog({
+		onClose: function(){
+			torrentUploader.clearStoredFiles();
+		}
+	});
+	
 	torrentUploader = new qq.FileUploader({
 		element: $("#torrentFileUploader").get(0),
 		action: "?action=addTorrent",
-		multiple: false,
+		//multiple: false,
 		allowedExtensions: ["torrent"],
 		sizeLimit: (1024*1024),
 		button: $("#selectTorrentFile").get(0),
@@ -509,8 +515,11 @@ $(function(){
 			$.messager.alert(lang.addtorrent,m);
 		},
 		onComplete: function(id,fn,data) {
-			$("#torrentTable").datagrid("reload");
-			torrentUploader.clearStoredFiles();
+			if (torrentUploader.getInProgress() == 0) {
+				$("#torrentTable").datagrid("reload");
+				setTimeout(torrentUploader.clearStoredFiles(),2000);
+			}
+			//
 		},
 		onError: function(i,f,r) {
 			$.messager.alert(lang.error,r);

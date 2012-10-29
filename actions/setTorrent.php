@@ -148,7 +148,7 @@ switch ($oper) {
 			}
 			$needtoupdate = array();
 			while($r = $sth->fetch()) {
-				$hashes = $r['$hash'];
+				$hashes = $r['hash'];
 				$torrents_rpc = $rpc->set($hashes,array('location'=>dirname($r['path'])));
 				if ($torrents_rpc->result != "success") {
 					onError("Failed to delete torrent");
