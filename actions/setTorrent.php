@@ -98,6 +98,33 @@ switch ($oper) {
 			if (!$db->query($sql)) {
 				onError("DB Error: Failed to update torrent status");
 			}
+		}		$param = array();
+		$sql = "SELECT COUNT(`id`) AS `count`, `hash` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `stopped` = 0 GROUP BY `hash`";
+		$sth = $db->query($sql);
+		if (!$sth) {
+			onError("DB Error: Failed to get torrent info");
+		}
+		$tobestopped = array();
+		while ($r= $sth->fetch()) {
+			if ($r['count'] == 1) {
+				$tobestopped[] = $r['hash'];
+			}
+		}
+		$result = TRUE;
+		if (!empty($tobestopped)) {
+			$torrents_rpc = $rpc->stop($tobestopped);
+			$result = $torrents_rpc->result == "success";
+			/*
+			if (!$result) {
+				onError("Transmission error: ".$torrents_rpc->result);
+			}*/
+		}
+		
+		if ($result) {
+			$sql = "UPDATE `torrents` SET `stopped` = 1 WHERE `id` IN (".implode(",", $id).")";
+			if (!$db->query($sql)) {
+				onError("DB Error: Failed to update torrent status");
+			}
 		}
 		break;
 	case 'start':

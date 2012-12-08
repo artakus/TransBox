@@ -13,7 +13,20 @@ if (!defined("TRANSBOX")) {
 	die("Forbidden");
 }
 
-$uid = $_SESSION['login']['uid'];
-
-	
-onOk();
+$uid = $_SESSION['login']['id'];
+$sql = "SELECT * FROM `users` WHERE `id` = :uid LIMIT 1";
+$sth = $db->prepare($sql);
+if (!$sth) {
+	onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
+}
+if (!$sth->execute(compact("uid"))) {
+	onError("DB error: Failed to retrive user data",$sth->errorInfo(),$sql);
+}
+$userstat = $sth->fetch();
+if (!$userstat) {
+	onError("Invalid user data");
+}
+unset($userstat['password']);
+unset($userstat['level']);
+unset($userstat['uid']);
+onOk("",compact("userstat"));

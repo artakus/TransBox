@@ -168,9 +168,26 @@ function fileControl(obj){
 	}
 }
 
+function refreshUserStat(){
+	$.get("?action=getUserStat",function(data){
+		var res = processResponse(data);
+		if (!res) {
+			return;
+		}
+		if (typeof res.userstat != "undefined") {
+			var ds = Math.floor((res.userstat.ds_current/res.userstat.ds_limit) * 100);
+			var bw = Math.floor(((res.userstat.rx_current+res.userstat.tx_current)/res.userstat.xfer_limit) * 100);
+			$("#usedSpace").progressbar("setValue",ds);
+			$("#usedBandwidth").progressbar("setValue",bw);
+		}
+	})
+}
+
 $(function(){
+//----------------variable--------------------/
 	var torrentUploader;
-	
+
+//----------------object--------------------/	
 	$("#torrentTable").datagrid({
 		url: "?action=getTorrents",
 		method: "get",
@@ -468,40 +485,54 @@ $(function(){
 		});
 	}
 
-	
-	$("#torrentTableAdd").click(function(){
-		$("#addTorrentDialogFrm").get(0).reset();
-		$("#addTorrentDialog").dialog("open");
-	});
-	
-	$("#addTorrentDialogBtnAdd").click(function(){
-		log(torrentUploader);
-		var frm = $("#addTorrentDialogFrm");
-		var obj = frm.serializeObject();
-		if (typeof obj.url != "undefined" && $.trim(obj.url) != "") {
-			$.post("?action=addTorrent", {
-				url: obj.url
-			},function (data){
-				var res = processResponse(data);
-				if (!res)
-					return;
-				frm.get(0).reset();
-				$("#torrentTable").datagrid("reload");
-			});
-		} else {
-			torrentUploader.uploadStoredFiles();
-		}
-	});
-	
-	$("#addTorrentDialogBtnCnl").click(function(){
-		$("#addTorrentDialog").dialog("close");
-	});
-	
 	$("#addTorrentDialog").dialog({
 		onClose: function(){
 			torrentUploader.clearStoredFiles();
 		}
 	});
+	
+	$("#folderList").tree({
+		loader: function(param,success,error) {
+			$.get("?action=getFolder",param,function(data){
+				var res = processResponse(data);
+				if (!res) {
+					error();
+					return;
+				}
+				success(res.folders);					
+			});
+			return true;
+		},
+		onClick: function(node){
+			$("#fileTable").datagrid("load", {
+				path: node.id
+			});
+		}
+	});
+	
+	
+	$("#mainTabPanel").tabs({
+		onSelect: function(t,i) {
+			switch (i) {
+				case 0:
+					reloadTable();
+				break;
+				default:
+					clearTimeout(reloadTimer);
+				break;
+			}
+		}
+	});
+	
+	$("#usedSpace").progressbar({  
+	    value: 0,
+	    text: lang.dscurrent+": {value}%"	      
+	});
+	
+	$("#usedBandwidth").progressbar({  
+	    value: 0,
+	    text: lang.xfercurrent+": {value}%"	      
+	});    
 	
 	torrentUploader = new qq.FileUploader({
 		element: $("#torrentFileUploader").get(0),
@@ -529,6 +560,34 @@ $(function(){
 		}
 	});
 	
+//----------------event--------------------/	
+	$("#torrentTableAdd").click(function(){
+		$("#addTorrentDialogFrm").get(0).reset();
+		$("#addTorrentDialog").dialog("open");
+	});
+	
+	$("#addTorrentDialogBtnAdd").click(function(){
+		log(torrentUploader);
+		var frm = $("#addTorrentDialogFrm");
+		var obj = frm.serializeObject();
+		if (typeof obj.url != "undefined" && $.trim(obj.url) != "") {
+			$.post("?action=addTorrent", {
+				url: obj.url
+			},function (data){
+				var res = processResponse(data);
+				if (!res)
+					return;
+				frm.get(0).reset();
+				$("#torrentTable").datagrid("reload");
+			});
+		} else {
+			torrentUploader.uploadStoredFiles();
+		}
+	});
+	
+	$("#addTorrentDialogBtnCnl").click(function(){
+		$("#addTorrentDialog").dialog("close");
+	});
 	
 	$("#autoReload").change(function(){
 		if (this.checked) {
@@ -571,36 +630,9 @@ $(function(){
 		$("#addUserDialog").dialog("close");
 	});
 	
-	$("#folderList").tree({
-		loader: function(param,success,error) {
-			$.get("?action=getFolder",param,function(data){
-				var res = processResponse(data);
-				if (!res) {
-					error();
-					return;
-				}
-				success(res.folders);					
-			});
-			return true;
-		},
-		onClick: function(node){
-			$("#fileTable").datagrid("load", {
-				path: node.id
-			});
-		}
-	});
+	$("#refreshUserStat").click(refreshUserStat);
 	
-	
-	$("#mainTabPanel").tabs({
-		onSelect: function(t,i) {
-			switch (i) {
-				case 0:
-					reloadTable();
-				break;
-				default:
-					clearTimeout(reloadTimer);
-				break;
-			}
-		}
-	});
+//---------------------------- init ------------------------//
+
+refreshUserStat();
 });

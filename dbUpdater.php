@@ -20,6 +20,13 @@ $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $sql = "SELECT * FROM `config`";
 $sth = $db->query($sql) or die(var_export($db->errorInfo(),true));
 $cfg = $sth->fetchAll(PDO::FETCH_KEY_PAIR);
+$max_running = isset($cfg['max_running']) ? intval($cfg['max_running']) : 0;
+if (empty($max_running))
+	$max_running = 4;
+
+if (empty($cfg['download_path']) || !file_exists($cfg['download_path'])) {
+	die("Download path not exists");
+}
 
 $sql = "SELECT * FROM `users`";
 $sth = $db->query($sql);
@@ -50,20 +57,28 @@ while($r = $sth->fetch()) {
 	
 	$torrents = array();
 	$torrent_id = array();
+	$all_torrents_id = array();
 	while($row = $sth_t->fetch()) {
+		$all_torrents_id[] = $row['id'];
 		$torrents[$row['hash']] = $row;
 		$torrent_id[] = $row['hash'];
 	}
 	if (empty($torrents))
 		continue;
 	$torrent_id = array_unique($torrent_id);
+	$running_torrent = array();
 	if (!empty($torrent_id)) {
-		$fields = array("hashString","uploadedEver","downloadedEver","percentDone");
+		$fields = array("hashString","uploadedEver","downloadedEver","percentDone","status");
 		$torrent_list = $rpc->get($torrent_id,$fields);
 		if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
 			$torrents_rpc = $torrent_list->arguments->torrents;
 			foreach ($torrents_rpc as $k=>$trt) {
 				$hash = $trt->hashString;
+				$id = $torrents[$hash]['id'];
+				$status = intval($trt->status); 
+				if ($status > 0 && $status < 8 && $torrents[$hash]['stopped'] == 0) {
+					$running_torrent[] = $id;
+				}
 				$c_rxed = $torrents[$hash]['rxed'];
 				$c_txed = $torrents[$hash]['txed'];
 				$rxed = isset($trt->downloadedEver) ? $trt->downloadedEver : 0;
@@ -71,7 +86,6 @@ while($r = $sth->fetch()) {
 				$percent = isset($trt->percentDone) ? $trt->percentDone: 0;
 				$rx += ($rxed - $c_rxed > 0) ? ($rxed - $c_rxed) : 0;
 				$tx += ($txed - $c_txed > 0) ? ($txed - $c_txed) : 0;
-				$id = $torrents[$hash]['id'];
 				if (!$sth_x->execute(compact("id","rxed","txed","percent"))) {
 					die(var_export($sth_x->errorInfo(),true));
 				}
@@ -83,6 +97,41 @@ while($r = $sth->fetch()) {
 	var_dump($bind);
 	if (!$sth_u->execute($bind)) {
 		die(var_export($sth_u->errorInfo(),true));
+	}
+	$need_to_stop = array();
+	if (count($running_torrent) > $max_running) {
+		$need_to_stop = array_slice($running_torrent, $max_running);
+	}
+	
+	if ($ds >= $r['ds_limit'] || ($rx+$tx) >= $r['xfer_limit']) {
+		$need_to_stop = $all_torrents_id;
+	}
+	
+	if (!empty($need_to_stop)) {
+		$id = $need_to_stop;
+		$param = array();
+		$sql = "SELECT COUNT(`id`) AS `count`, `hash` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `stopped` = 0 GROUP BY `hash`";
+		$sth = $db->query($sql);
+		if (!$sth) {
+			die("DB Error: Failed to get torrent info");
+		}
+		$tobestopped = array();
+		while ($r= $sth->fetch()) {
+			if ($r['count'] == 1) {
+				$tobestopped[] = $r['hash'];
+			}
+		}
+		$result = TRUE;
+		if (!empty($tobestopped)) {
+			$torrents_rpc = $rpc->stop($tobestopped);
+			$result = $torrents_rpc->result == "success";
+		}
+		if ($result) {
+			$sql = "UPDATE `torrents` SET `stopped` = 1 WHERE `id` IN (".implode(",", $id).")";
+			if (!$db->query($sql)) {
+				die("DB Error: Failed to update torrent status");
+			}
+		}
 	}
 }
 

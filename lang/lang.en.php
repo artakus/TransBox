@@ -56,6 +56,9 @@ $lang['url'] = "URL";
 $lang['torrentfile'] = "Torent file";
 $lang['percentage'] = "Percentage";
 $lang['autoreload'] = "Auto reload (every 5 seconds)";
+$lang['usedSpace'] = "Used space";
+$lang['usedBandwidth'] = "Used bandwidth";
+//$lang[''] = "";
 
 $lang['xferlimit'] = "Bandwidth limit";
 $lang['xfercurrent'] = "Bandwidth usage";
