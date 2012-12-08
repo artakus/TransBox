@@ -615,7 +615,7 @@ $(function(){
 		var frm = $("#addUserDialogFrm");
 		if (frm.form("validate")) {
 			var obj = frm.serializeObject();
-			$.post("?action=addUser", obj ,function (data){
+			$.post("?action=setUser", obj ,function (data){
 				var res = processResponse(data);
 				if (!res)
 					return;

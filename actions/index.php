@@ -47,15 +47,15 @@ USERTAB;
     		</fieldset>
     		<fieldset>
     			<legend><!xferlimit!></legend>
-    			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 200px; text-align: right;" min="0" name="xfer_limit" /> MB</span>
+    			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 200px; text-align: right;" min="0" name="xfer_limit" /> MB/month</span>
     		</fieldset>
     		<fieldset>
     		<legend><!rxlimit!></legend>
-    			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 200px; text-align: right;" min="0" name="rx_limit" /> MB</span>
+    			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 200px; text-align: right;" min="0" name="rx_limit" /> MB/month</span>
     		</fieldset>
     		<fieldset>
     			<legend><!txlimit!></legend>
-    			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 200px; text-align: right;" min="0" name="tx_limit" /> MB</span>
+    			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 200px; text-align: right;" min="0" name="tx_limit" /> MB/month</span>
     		</fieldset>
     		<input type="hidden" name="id" value="0" />
     	</form>
