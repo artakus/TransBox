@@ -19,7 +19,9 @@ $download_path = $_SESSION['cfg']['download_path'];
 $save_path = $download_path."/".$_SESSION['login']['id'];
 
 $tmpdir = dirname(__FILE__)."/../tmp";
-
+if (!file_exists($tmpdir)) {
+	$tmpdir = sys_get_temp_dir();
+}
 $result = array();
 if (!empty($url)) {
 	$torrent = file_get_contents($url);
