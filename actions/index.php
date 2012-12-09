@@ -58,6 +58,7 @@ USERTAB;
     			<span class="combo"><input type="number" class="easyui-numberbox combo-text" style="width: 180px; text-align: right;" min="0" name="tx_limit"  id="userFrmTxLimit" /> MB/month</span>
     		</fieldset>
     		<input type="hidden" name="id" value="0" />
+    		<input type="hidden" name="oper" value="edit" />
     	</form>
     </div>
     <div id="addUserDialogBtn" >

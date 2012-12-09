@@ -225,6 +225,7 @@ function userControl(obj){
 			frm.get(0).reset();
 			$("input[name='email']",frm).val(record.email);
 			$("input[name='id']",frm).val(record.id);
+			$("input[name='oper']",frm).val("edit");
 			$("#userFrmDsLimit").numberbox("setValue",parseInt(record.ds_limit,10)/(1024*1024));
 			$("#userFrmXferLimit").numberbox("setValue",parseInt(record.xfer_limit,10)/(1024*1024));
 			$("#userFrmRxLimit").numberbox("setValue",parseInt(record.rx_limit,10)/(1024*1024));
@@ -242,7 +243,6 @@ function refreshUserStat(){
 		}
 		if (typeof res.userstat != "undefined") {
 			var stat = res.userstat;
-			log(stat);
 			var ds_limit = parseInt(stat.ds_limit,10);
 			var ds_curr = parseInt(stat.ds_current,10);  
 			var xfer_limit = parseInt(stat.xfer_limit,10);
@@ -250,8 +250,6 @@ function refreshUserStat(){
 			var tx_curr = parseInt(stat.tx_current,10);
 			var ds = ds_limit ? Math.floor((ds_curr/ds_limit) * 100) : 0;
 			var bw = xfer_limit ? Math.floor(((rx_curr+tx_curr)/xfer_limit) * 100) : 0;
-			log(ds);
-			log(bw);			
 			$("#usedSpace").progressbar("setValue",ds);
 			$("#usedBandwidth").progressbar("setValue",bw);
 		}
