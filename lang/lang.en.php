@@ -79,6 +79,7 @@ $lang['tstatus'] = array(
 "Pause","Check pending","Checking","","Downloading","","Seeding","","Stopped"
 );
 
+$lang['insufData'] = "Insufficient data";
 $lang['passIsEmpty'] = "Password is empty. Please insert password";
 $lang['sessTimeOut'] = "Session timed out. Please re-login";
 

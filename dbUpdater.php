@@ -32,7 +32,7 @@ $sql = "SELECT * FROM `users`";
 $sth = $db->query($sql);
 $sth_u = $db->prepare("UPDATE `users` SET `ds_current` = :ds, `rx_current` = :rx, `tx_current` = :tx WHERE `id` = :uid");
 
-$sql_t = "SELECT `id`,`hash`,`rxed`,`txed`,`percent` FROM `torrents` WHERE `uid` = :uid AND `stopped` = 0";
+$sql_t = "SELECT `id`,`hash`,`rxed`,`txed`,`percent`,`stopped` FROM `torrents` WHERE `uid` = :uid AND `stopped` = 0";
 $sth_t = $db->prepare($sql_t);
 if (!$sth_t) {
 	die(var_export($db->errorInfo(),true));
@@ -94,7 +94,6 @@ while($r = $sth->fetch()) {
 	}
 	
 	$bind = compact("uid","ds","rx","tx");
-	var_dump($bind);
 	if (!$sth_u->execute($bind)) {
 		die(var_export($sth_u->errorInfo(),true));
 	}

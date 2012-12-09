@@ -241,10 +241,13 @@ function refreshUserStat(){
 			return;
 		}
 		if (typeof res.userstat != "undefined") {
-			var ds_limit = parseInt(res.userstat.ds_limit,10); 
-			var xfer_limit = parseInt(res.userstat.xfer_limit,10);
-			var ds = ds_limit ? Math.floor((res.userstat.ds_current/res.userstat.ds_limit) * 100) : 0;
-			var bw = xfer_limit ? Math.floor(((res.userstat.rx_current+res.userstat.tx_current)/res.userstat.xfer_limit) * 100) : 0;
+			var stat = res.userstat;
+			var ds_limit = parseInt(stat.ds_limit,10); 
+			var xfer_limit = parseInt(stat.xfer_limit,10);
+			var rx_curr = parseInt(stat.rx_current,10);
+			var tx_curr = parseInt(stat.tx_current,10);
+			var ds = ds_limit ? Math.floor((stat.ds_current/ds_limit) * 100) : 0;
+			var bw = xfer_limit ? Math.floor(((rx_curr+tx_curr)/xfer_limit) * 100) : 0;
 			$("#usedSpace").progressbar("setValue",ds);
 			$("#usedBandwidth").progressbar("setValue",bw);
 		}
