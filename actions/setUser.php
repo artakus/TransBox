@@ -20,7 +20,7 @@ if ($_SESSION['login']['level'] > 1) {
 $uid = $_SESSION['login']['id'];
 $id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
 $email = isset($_REQUEST['email']) ? trim($_REQUEST['email']) : "";
-$password = isset($_REQUEST['password']) ? trim($_REQUEST['password']) : "";
+$password = isset($_REQUEST['password']) ? trim($_REQUEST['password']) : NULL;
 $ds_limit = isset($_REQUEST['ds_limit']) ? intval($_REQUEST['ds_limit'])*(1024*1024) : 0;
 $xfer_limit = isset($_REQUEST['xfer_limit']) ? intval($_REQUEST['xfer_limit'])*(1024*1024) : 0;
 $rx_limit = isset($_REQUEST['rx_limit']) ? intval($_REQUEST['rx_limit'])*(1024*1024) : 0;
@@ -52,26 +52,36 @@ if ($id > 0) {
 							`ds_limit` = :ds_limit, 
 							`xfer_limit` = :xfer_limit, 
 							`rx_limit` = :rx_limit ,
-							`tx_limit` = :tx_limit 
+							`tx_limit` = :tx_limit,
+							`ratio` = :ratio
 						WHERE 
 							`id` = :id";
+				$sth = $db->prepare($sql);
+				if (!$sth) {
+					onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
+				}
+				if (!$sth->execute(compact("email","password","ds_limit","xfer_limit","tx_limit","rx_limit","ratio","id"))) {
+					onError("DB error: Failed to update user data to DB",$sth->errorInfo(),$sql);
+				}
 			} else {
 				$sql = "UPDATE 
 							`users` SET `email` = :email, 
 							`ds_limit` = :ds_limit, 
 							`xfer_limit` = :xfer_limit, 
-							`rx_limit` = :rx_limit ,
-							`tx_limit` = :tx_limit 
+							`rx_limit` = :rx_limit,
+							`tx_limit` = :tx_limit,
+							`ratio` = :ratio 
 						WHERE 
 							`id` = :id";
+				$sth = $db->prepare($sql);
+				if (!$sth) {
+					onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
+				}
+				if (!$sth->execute(compact("email","ds_limit","xfer_limit","tx_limit","rx_limit","ratio","id"))) {
+					onError("DB error: Failed to update user data to DB",$sth->errorInfo(),$sql);
+				}
 			}
-			$sth = $db->prepare($sql);
-			if (!$sth) {
-				onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
-			}
-			if (!@$sth->execute(compact("email","password","ds_limit","xfer_limit","tx_limit","rx_limit","id"))) {
-				onError("DB error: Failed to update user data to DB",$sth->errorInfo(),$sql);
-			}
+			onOk();
 			break;
 		case 'delete':
 			if ($id == $uid) {
