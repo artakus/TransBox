@@ -165,7 +165,7 @@ function rand_str($length = 5, $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
  */
 function encrypt($string) {
 	$key = session_id().$_SERVER['REMOTE_ADDR']."gakki";
-	return bin2hex(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, md5($key), $string, MCRYPT_MODE_CBC, md5(md5($key))));
+	return bin2hex(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, md5($key), gzcompress($string,9), MCRYPT_MODE_CBC, md5(md5($key))));
 }
 
 /**
@@ -175,7 +175,7 @@ function encrypt($string) {
  */
 function decrypt($string){
 	$key = session_id().$_SERVER['REMOTE_ADDR']."gakki";
-	return rtrim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, md5($key), pack("H*", $string), MCRYPT_MODE_CBC, md5(md5($key))), "\0");
+	return gzuncompress(rtrim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, md5($key), pack("H*", $string), MCRYPT_MODE_CBC, md5(md5($key))), "\0"));
 }
 
 /***
