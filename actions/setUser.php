@@ -46,15 +46,30 @@ if ($id > 0) {
 			break;
 		case 'edit':
 			if (!empty($password)) {
-				$sql = "UPDATE `users` SET `email` = :email, `password` = MD5(:password), `ds_limit` = :ds_limit, `xfer_limit` = :xfer_limit, `rx_limit` = :rx_lmimit ,`tx_limit` = :tx_limit, `rx_speed` = :rx_speed, `tx_speed` = :tx_speed, `ratio` = :ratio WHERE `id` = :id";
+				$sql = "UPDATE 
+							`users` SET `email` = :email, 
+							`password` = MD5(:password), 
+							`ds_limit` = :ds_limit, 
+							`xfer_limit` = :xfer_limit, 
+							`rx_limit` = :rx_limit ,
+							`tx_limit` = :tx_limit 
+						WHERE 
+							`id` = :id";
 			} else {
-				$sql = "UPDATE `users` SET `email` = :email, `ds_limit` = :ds_limit, `xfer_limit` = :xfer_limit, `rx_limit` = :rx_lmimit ,`tx_limit` = :tx_limit WHERE `id` = :id";
+				$sql = "UPDATE 
+							`users` SET `email` = :email, 
+							`ds_limit` = :ds_limit, 
+							`xfer_limit` = :xfer_limit, 
+							`rx_limit` = :rx_limit ,
+							`tx_limit` = :tx_limit 
+						WHERE 
+							`id` = :id";
 			}
 			$sth = $db->prepare($sql);
 			if (!$sth) {
 				onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
 			}
-			if (!@$sth->execute(compact("email","password","ds_limit","xfer_limit","tx_limit","rx_limit","ratio","id"))) {
+			if (!@$sth->execute(compact("email","password","ds_limit","xfer_limit","tx_limit","rx_limit","id"))) {
 				onError("DB error: Failed to update user data to DB",$sth->errorInfo(),$sql);
 			}
 			break;
