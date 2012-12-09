@@ -48,7 +48,7 @@ if ($id > 0) {
 			if (!empty($password)) {
 				$sql = "UPDATE `users` SET `email` = :email, `password` = MD5(:password), `ds_limit` = :ds_limit, `xfer_limit` = :xfer_limit, `rx_limit` = :rx_lmimit ,`tx_limit` = :tx_limit, `rx_speed` = :rx_speed, `tx_speed` = :tx_speed, `ratio` = :ratio WHERE `id` = :id";
 			} else {
-				$sql = "UPDATE `users` SET `email` = :email, `ds_limit` = :ds_limit, `xfer_limit` = :xfer_limit, `rx_limit` = :rx_lmimit ,`tx_limit` = :tx_limit, `rx_speed` = :rx_speed, `tx_speed` = :tx_speed, `ratio` = :ratio WHERE `id` = :id";
+				$sql = "UPDATE `users` SET `email` = :email, `ds_limit` = :ds_limit, `xfer_limit` = :xfer_limit, `rx_limit` = :rx_lmimit ,`tx_limit` = :tx_limit WHERE `id` = :id";
 			}
 			$sth = $db->prepare($sql);
 			if (!$sth) {
