@@ -21,7 +21,7 @@ $download_path = $_SESSION['cfg']['download_path'];
 $save_path = $download_path."/".$_SESSION['login']['id'];
 
 if (empty($id) || empty($hash) || empty($oper)) {
-	onError("Error: ".$lang['insufData']);
+	onError("Error: ".$lang['insufData'],NULL,compact("id","hash","oper"));
 }
 $hash = array_unique($hash);
 $rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
