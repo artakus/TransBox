@@ -12,7 +12,6 @@ if (!defined("TRANSBOX")) {
 	header('HTTP/1.1 403 Forbidden');
 	die("Forbidden");
 }
-
 $id = isset($_REQUEST['id']) ? json_decode($_REQUEST['id']) : NULL;
 $hash = isset($_REQUEST['hash']) ? json_decode($_REQUEST['hash']) : NULL;
 $uid = $_SESSION['login']['id'];
@@ -21,7 +20,7 @@ $download_path = $_SESSION['cfg']['download_path'];
 $save_path = $download_path."/".$_SESSION['login']['id'];
 
 if (empty($id) || empty($hash) || empty($oper)) {
-	onError("Error: ".$lang['insufData'],NULL,compact("id","hash","oper"));
+	onError("Error: ".$lang['insufData']);
 }
 $hash = array_unique($hash);
 $rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
