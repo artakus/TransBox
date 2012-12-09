@@ -58,6 +58,10 @@ $lang['percentage'] = "Percentage";
 $lang['autoreload'] = "Auto reload (every 5 seconds)";
 $lang['usedSpace'] = "Used space";
 $lang['usedBandwidth'] = "Used bandwidth";
+$lang['adduser'] = "Add user";
+$lang['deluser'] = "Delete user";
+$lang['edituser'] = "Edit user";
+$lang['resetuser'] = "Reset user stats";
 //$lang[''] = "";
 
 $lang['xferlimit'] = "Bandwidth limit";
@@ -75,6 +79,7 @@ $lang['tstatus'] = array(
 "Pause","Check pending","Checking","","Downloading","","Seeding","","Stopped"
 );
 
+$lang['passIsEmpty'] = "Password is empty. Please insert password";
 $lang['sessTimeOut'] = "Session timed out. Please re-login";
 
 $lang['weekDays'] = array("Su","Mo","Tu","We","Th","Fr","Sa");

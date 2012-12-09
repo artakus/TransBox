@@ -168,6 +168,72 @@ function fileControl(obj){
 	}
 }
 
+function userControl(obj){
+	var $this = $(obj);
+	var uid = $this.attr("uid");
+	var control = $this.attr("control");
+	var param = {
+		id: uid,
+		oper: control
+	}
+	switch(control) {
+		case "reset":
+			$.messager.confirm(lang.resetuser,"Are you sure want to reset this user stat?",function(r){
+				if (r) {
+					$.post("?action=setUser",param,function(data){
+						var res = processResponse(data);
+						if (!res)
+							return;
+						setTimeout('$("#userTable").datagrid("reload")',500);
+						if (res.msg.length > 0) {
+							$.messager.show({
+								title: "Warning",
+								msg: res.msg,
+								timeout: 2000
+							});
+						}
+					});
+				}
+			});
+			break;
+		case "delete":
+			$.messager.confirm(lang.deluser,"Are you sure want to delete this user?",function(r){
+				if (r) {
+					$.post("?action=setUser",param,function(data){
+						var res = processResponse(data);
+						if (!res)
+							return;
+						setTimeout('$("#userTable").datagrid("reload")',500);
+						if (res.msg.length > 0) {
+							$.messager.show({
+								title: "Warning",
+								msg: res.msg,
+								timeout: 2000
+							});
+						}
+					});
+				}
+			});
+			break;
+		case "edit":
+			$("#userTable").datagrid("selectRecord",uid);
+			var record = $("#userTable").datagrid("getSelected"); 
+			log(record);
+			if (record == null)
+				return;
+			var frm = $("#addUserDialogFrm")
+			frm.get(0).reset();
+			$("input[name='email']",frm).val(record.email);
+			$("input[name='id']",frm).val(record.id);
+			$("#userFrmDsLimit").numberbox("setValue",parseInt(record.ds_limit,10)/(1024*1024));
+			$("#userFrmXferLimit").numberbox("setValue",parseInt(record.xfer_limit,10)/(1024*1024));
+			$("#userFrmRxLimit").numberbox("setValue",parseInt(record.rx_limit,10)/(1024*1024));
+			$("#userFrmTxLimit").numberbox("setValue",parseInt(record.tx_limit,10)/(1024*1024));
+			$("#addUserDialog").dialog("open");
+			break;
+	}
+}
+
 function refreshUserStat(){
 	$.get("?action=getUserStat",function(data){
 		var res = processResponse(data);
@@ -175,8 +241,10 @@ function refreshUserStat(){
 			return;
 		}
 		if (typeof res.userstat != "undefined") {
-			var ds = Math.floor((res.userstat.ds_current/res.userstat.ds_limit) * 100);
-			var bw = Math.floor(((res.userstat.rx_current+res.userstat.tx_current)/res.userstat.xfer_limit) * 100);
+			var ds_limit = parseInt(res.userstat.ds_limit,10); 
+			var xfer_limit = parseInt(res.userstat.xfer_limit,10);
+			var ds = ds_limit ? Math.floor((res.userstat.ds_current/res.userstat.ds_limit) * 100) : 0;
+			var bw = xfer_limit ? Math.floor(((res.userstat.rx_current+res.userstat.tx_current)/res.userstat.xfer_limit) * 100) : 0;
 			$("#usedSpace").progressbar("setValue",ds);
 			$("#usedBandwidth").progressbar("setValue",bw);
 		}
@@ -400,6 +468,7 @@ $(function(){
 			pagination: true,
 			fit: true,
 			toolbar: "#userTableTb",
+			idField: "id",
 			checkOnSelect: false,
 			singleSelect: true,
 			pageList: [30,50,100],
@@ -410,9 +479,9 @@ $(function(){
 					width: 100,
 					align: "center",
 					formatter: function(d,rd) {
-						return "<div style='padding-top:2px;'><img class='control' control='reset' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/database_lightning.png'>&nbsp;"+
-						"<img class='control' control='delete' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/user_delete.png' onclick='control(this)'>&nbsp;"+
-						"<img class='control' control='edit' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/user_edit.png' onclick='control(this)'></div>";
+						return "<div style='padding-top:2px;'><img class='control' control='reset' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/database_lightning.png' title='"+lang.resetuser+"' alt='"+lang.resetuser+"'>&nbsp;"+
+						"<img class='control' control='delete' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/user_delete.png' onclick='control(this)' title='"+lang.deluser+"' alt='"+lang.deluser+"'>&nbsp;"+
+						"<img class='control' control='edit' uid='"+rd.id+"' onclick='userControl(this)' src='css/famfam/user_edit.png' onclick='control(this)' title='"+lang.edituser+"' alt='"+lang.edituser+"'></div>";
 					}
 				},
 				{
@@ -450,7 +519,12 @@ $(function(){
 					align: "right",
 					sortable: true,
 					formatter: function(d,rd) {
-						return readableFileSize(parseInt(rd.rx_current,10) + parseInt(rd.tx_current,10));
+						var rx = parseInt(rd.rx_current,10);
+						var tx = parseInt(rd.tx_current,10);
+						if (rx == 0 && tx == 0) {
+							return "0 B";
+						}
+						return readableFileSize(rx + tx);
 					}
 				},{
 					field: "rx_limit",
@@ -598,7 +672,9 @@ $(function(){
 	});
 	
 	$("#userTableAdd").click(function(){
-		$("#addUserDialogFrm").get(0).reset();
+		var frm = $("#addUserDialogFrm").form("clear"); 
+		frm.get(0).reset();
+		$("input[name='id']").val(0);
 		$("#addUserDialog").dialog("open");
 	});
 	
@@ -615,6 +691,10 @@ $(function(){
 		var frm = $("#addUserDialogFrm");
 		if (frm.form("validate")) {
 			var obj = frm.serializeObject();
+			if (parseInt(obj.id,10) == 0 && obj.password == "") {
+				$.messager.alert(lang.error, lang.passIsEmpty,"error");
+				return;
+			}
 			$.post("?action=setUser", obj ,function (data){
 				var res = processResponse(data);
 				if (!res)

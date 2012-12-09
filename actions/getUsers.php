@@ -41,13 +41,16 @@ if ($total == 0) {
 	onOk("",$dummy);
 }
 
-$sql = "SELECT * FROM `users` ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
+$sql = "SELECT `id`, `email`, `level`, `ds_limit`, `ds_current`, `xfer_limit`, `rx_limit`, `rx_current`, `tx_limit`, `tx_current`, `rx_speed`, `tx_speed`, `ratio`
+ 		FROM 
+ 			`users` 
+ 		ORDER BY `{$sort}` {$order} LIMIT {$skip},{$rows}";
 $sth = $db->prepare($sql);
 	if (!$sth) {
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql,$dummy);
 }
 if (!$sth->execute()) {
-	onError("DB error: Failed to retrive torrent data",$sth->errorInfo(),$sql,$dummy);
+	onError("DB error: Failed to retrive user data",$sth->errorInfo(),$sql,$dummy);
 }
 
 $rows = $sth->fetchAll();

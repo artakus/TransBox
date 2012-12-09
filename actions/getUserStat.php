@@ -14,7 +14,7 @@ if (!defined("TRANSBOX")) {
 }
 
 $uid = $_SESSION['login']['id'];
-$sql = "SELECT * FROM `users` WHERE `id` = :uid LIMIT 1";
+$sql = "SELECT `ds_limit`, `ds_current`, `xfer_limit`, `rx_limit`, `rx_current`, `tx_limit`, `tx_current`, `rx_speed`, `tx_speed` FROM `users` WHERE `id` = :uid LIMIT 1";
 $sth = $db->prepare($sql);
 if (!$sth) {
 	onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
@@ -26,7 +26,4 @@ $userstat = $sth->fetch();
 if (!$userstat) {
 	onError("Invalid user data");
 }
-unset($userstat['password']);
-unset($userstat['level']);
-unset($userstat['uid']);
 onOk("",compact("userstat"));

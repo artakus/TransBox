@@ -28,10 +28,6 @@ $tx_limit = isset($_REQUEST['tx_limit']) ? intval($_REQUEST['tx_limit'])*(1024*1
 $ratio = isset($_REQUEST['ratio']) ? floatval($_REQUEST['ratio']) : 1;
 $oper = isset($_REQUEST['oper']) ? strtolower(trim($_REQUEST['oper'])) : "";
 
-if (empty($email)) {
-	onError("Insuffient data");
-}
-
 if ($id > 0) {
 	if (empty($oper)) {
 		onError("Insuffient data");
@@ -46,6 +42,7 @@ if ($id > 0) {
 			if (!@$sth->execute(compact("id"))) {
 				onError("DB error: Failed to update user data to DB",$sth->errorInfo(),$sql);
 			}
+			onOk();
 			break;
 		case 'edit':
 			if (!empty($password)) {
@@ -132,8 +129,11 @@ if ($id > 0) {
 			break;
 	}
 } else {
+	if (empty($email)) {
+		onError("Insuffient data");
+	}
 	// add new user
-	$sql = "INSERT INTO `users` VALUES (NULL, :email, MD5(:password), 2, :ds_limit, 0, :xfer_limit, :rx_limit, 0, :tx_limit, 0, 0, 0)";
+	$sql = "INSERT INTO `users` VALUES (NULL, :email, MD5(:password), 2, :ds_limit, 0, :xfer_limit, :rx_limit, 0, :tx_limit, 0, 0, 0, 0)";
 	$sth = $db->prepare($sql);
 	if (!$sth) {
 		onError("DB error: Invalid SQL",$db->errorInfo(),$sql);
