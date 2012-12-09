@@ -41,8 +41,8 @@ if (!empty($url)) {
 	// Call handleUpload() with the name of the folder, relative to PHP's getcwd()
 	$result = $uploader->handleUpload($tmpdir.'/');
 	if (isset($result['success']) && $result['success']) {
-		$tmp = "tmp/".$uploader->getName();
-		$torrent = file_get_contents($tmp);
+		$tmp = $tmpdir."/".$uploader->getUploadName();
+		$torrent = @file_get_contents($tmp);
 		if (empty($torrent)) {
 			$result['success'] = FALSE;
 			onError("Failed to read torrent file",null,null,$result);
