@@ -448,6 +448,9 @@ $(function(){
 		onDblClickRow:function(ri,rd) {
 			var ft = $('#folderList');
 			var node = ft.tree('find', rd.fullpath);
+			if (rd.icon != "folder") {
+				return;
+			}
 			if (node) {
 				ft.tree('expandTo', node.target);
 				ft.tree('select', node.target);

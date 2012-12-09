@@ -34,6 +34,7 @@ $lang['date'] = "Date";
 $lang['setting'] = "Setting";
 $lang['control'] = "Control";
 $lang['filePath'] = "File path";
+$lang['invPath'] = "Invalid path";
 $lang['mail'] = "Mail";
 $lang['add'] = "Add";
 $lang['remove'] = "Remove";

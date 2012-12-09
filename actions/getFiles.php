@@ -38,6 +38,10 @@ $size = array();
 $type = array();
 
 if (file_exists($realPath)) {
+	if (!is_dir($realPath)) {
+		onError($lang['invPath']);
+	}
+	
 	$di = new DirectoryIterator($realPath);
 	foreach ($di as $ns => $fileinfo) {
 		if ($fileinfo->isDot()) {
