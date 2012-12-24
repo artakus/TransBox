@@ -15,7 +15,7 @@ if (!defined("TRANSBOX")) {
 
 $path = (isset($_REQUEST['path']) && trim($_REQUEST['path']) != "") ? trim($_REQUEST['path']) : "";
 if (empty($path)) {
-	onError("Error: Invalid path");
+	onError("Error: Invalid path",$_REQUEST);
 }
 
 $json = decrypt($path);

@@ -70,8 +70,10 @@ if (empty($torrent_id)) {
 $t = array();
 $rpc = new TransmissionRPC($_SESSION['cfg']['transmission_url'],$_SESSION['cfg']['transmission_username'],$_SESSION['cfg']['transmission_password']);
 $fields = array("hashString","percentDone","status","uploadRatio","rateDownload","rateUpload","isFinished");
-$torrent_list = $rpc->get(array(),$fields);
+$torrent_list = $rpc->get($torrent_id,$fields);
 if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
+	$arg = get_object_vars($torrent_list->arguments);
+	if  (!empty($arg)) {
 	$torrents_rpc = $torrent_list->arguments->torrents;
 	foreach ($torrents_rpc as $k=>$trt) {
 		$hash = $trt->hashString;
@@ -83,9 +85,15 @@ if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
 		$finished = isset($trt->isFinished) ? $trt->isFinished : FALSE;
 		$t[$hash] = compact("status","ratio","percentage","up_speed","down_speed","finished");
 	}
+	}
 }
+$a = array("status"=>-1,"ratio"=>0,"percentage"=>0,"up_speed"=>0,"down_speed"=>0,"finished"=>FALSE);
 foreach ($torrents as $key=>$value) {
-	$torrents[$key] = $value + $t[$value['hash']];
+	if (isset($t[$value['hash']])) {
+		$torrents[$key] = array_merge($value,$t[$value['hash']]);
+	} else {
+		$torrents[$key] = array_merge($value,$a);
+	}
 }
 
 $rows = array_values($torrents);

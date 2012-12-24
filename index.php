@@ -9,7 +9,8 @@
  * *************/
 
 define("TRANSBOX",true); //application name here
-ini_set("session.cookie_httponly", 1);session_start();
+ini_set("session.cookie_httponly", 1);
+session_start();
 require_once 'config.php';
 if ($debug) {
 	error_reporting(E_ALL);
@@ -18,6 +19,13 @@ if ($debug) {
 	error_reporting(0);
 	ini_set('display_errors', '0');
 }
+
+//var_dump(ini_get('zlib.output_compression'));
+$zcomp = ini_get('zlib.output_compression');
+if (empty($zcomp)) {
+        ob_start("ob_gzhandler");
+}
+
 
 try {
 	// db will be used globally, so will be defined once.

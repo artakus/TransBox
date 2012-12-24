@@ -48,9 +48,9 @@ function viewHTML($obj = NULL) {
 	
 	if (!file_exists("view/".$agent."/".$action.".html"))
 		die("Invalid view");
-	ob_start();
-	require_once 'view/'.$agent."/".$action.".html";
-	$newHtml = ob_get_clean();
+	//ob_start();
+	$newHtml = file_get_contents("view/".$agent."/".$action.".html");
+//	$newHtml = ob_get_clean();
 	$pattern = array();
 	$replacement = array();
 	
@@ -73,8 +73,16 @@ function viewHTML($obj = NULL) {
 		}
 	}
 	$newHtml = preg_replace($pattern, $replacement, $newHtml);
-	
-	die($newHtml);
+	$ob_level = ob_get_level ();
+	if (!empty($ob_level)) {
+		echo $newHtml;
+		header("Content-Length: ".ob_get_length());
+		ob_end_flush();
+	} else {
+		$len = mb_strlen($newHtml);
+		header("Content-Length: ".$len);
+		die($newHtml);
+	}
 }
 
  /***
@@ -218,7 +226,18 @@ function onOk($msg="",$array=array()) {
 	$a = $array;
 	$a['res'] = "OK";
 	$a['msg'] = $msg;
-	die(json_encode($a));
+	$json = json_encode($a);
+	$ob_level = ob_get_level ();
+	header("Content-Type: application/json");
+        if (!empty($ob_level)) {
+                echo $json;
+//                header("Content-Length: ".ob_get_length());
+                ob_end_flush();
+        } else {
+                $len = strlen($json);
+                header("Content-Length: ".$len);
+                die($json);
+        }
 }
 
 /**
@@ -371,6 +390,10 @@ function xSendFileDownload($path) {
  * @param string $path Fullpath of the file
  */
 function phpDownloadFile($path) {
+	$ob_level = ob_get_level ();
+        if (!empty($ob_level)) {
+		ob_end_clean();
+        }	
 	$root =  $_SESSION['cfg']['download_path'];
 	if ($_SESSION['login']['level'] > 1) {
 		$root = $root."/".$_SESSION['login']['id'];	
@@ -443,17 +466,17 @@ function phpDownloadFile($path) {
 			}
 			// write the session to close so you can continue to browse on the site.
 			@session_write_close();
-			set_time_limit(0);
+			@set_time_limit(0);
 			$file = @fopen($path,"rb");
 			while(!feof($file))
 			{
-				print(@fread($file, $bufsize));
-				ob_flush();
-				flush();
+				echo (@fread($file, $bufsize));
+				@ob_flush();
+				@flush();
 			}
-			fclose($file);
+			@fclose($file);
 		}
-		exit();
+		die();
 	} else {
 		onError("File Not found for download");
 	}

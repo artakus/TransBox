@@ -27,6 +27,6 @@ $httpsAction = explode(",", "setup,login,setPassword");
 $dbType = "mysql"; // sqlite also possible
 $dbHost = "localhost"; //  db host or file path for sqlite
 $dbUser = "transbox"; //  db user - for mysql, null for sqlite
-$dbPass = "AtyyhxUtb9JWr2Q2"; //  db pass - for mysql, null for sqlite
+$dbPass = "b6mFWwM3a9svQth3"; //  db pass - for mysql, null for sqlite
 $dbName = "transbox"; // for mysql
 $dbPersist = true; 

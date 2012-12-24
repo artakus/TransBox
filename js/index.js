@@ -22,6 +22,7 @@ function reloadTable(){
 		page: options.pageNumber,
 		row: options.pageSize
 	},function(data) {
+		reloadTimer = setTimeout("reloadTable()",5000);
 		var res = processResponse(data,true);
 		if (!res) {
 			$.messager.show({
@@ -37,13 +38,12 @@ function reloadTable(){
 				var t = $("span[tid='"+v.id+"']");
 				t.filter(".tStatus").text(lang.tstatus[v.status]);
 				t.filter(".tPercent").text((v.percentage * 100).toFixed(1));
-				t.filter(".sUSpeed").text((v.up_speed < 1 ? "0": (v.up_speed/1024).toFixed(1)));
+				t.filter(".tUSpeed").text((v.up_speed < 1 ? "0": (v.up_speed/1024).toFixed(1)));
 				t.filter(".tDSpeed").text((v.down_speed < 1 ? "0": (v.down_speed/1024).toFixed(1)));
 				t.filter(".tRatio").text(v.ratio.toFixed(2));
 			});
 		}
 	});
-	reloadTimer = setTimeout("reloadTable()",5000);
 }
 
 function control(obj){

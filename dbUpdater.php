@@ -63,19 +63,20 @@ while($r = $sth->fetch()) {
 		$torrents[$row['hash']] = $row;
 		$torrent_id[] = $row['hash'];
 	}
-	if (empty($torrents))
-		continue;
+	if (!empty($torrents)) {
 	$torrent_id = array_unique($torrent_id);
 	$running_torrent = array();
 	if (!empty($torrent_id)) {
 		$fields = array("hashString","uploadedEver","downloadedEver","percentDone","status");
 		$torrent_list = $rpc->get($torrent_id,$fields);
 		if ($torrent_list->result == "success" && !empty($torrent_list->arguments)) {
+			$arg = get_object_vars($torrent_list->arguments);
+			if (!empty($arg)) {
 			$torrents_rpc = $torrent_list->arguments->torrents;
 			foreach ($torrents_rpc as $k=>$trt) {
 				$hash = $trt->hashString;
 				$id = $torrents[$hash]['id'];
-				$status = intval($trt->status); 
+				$status = isset($trt->status) ? intval($trt->status) : 0; 
 				if ($status > 0 && $status < 8 && $torrents[$hash]['stopped'] == 0) {
 					$running_torrent[] = $id;
 				}
@@ -90,34 +91,31 @@ while($r = $sth->fetch()) {
 					die(var_export($sth_x->errorInfo(),true));
 				}
 			}
+			}
 		}	
-	}
-	
-	$bind = compact("uid","ds","rx","tx");
-	if (!$sth_u->execute($bind)) {
-		die(var_export($sth_u->errorInfo(),true));
 	}
 	$need_to_stop = array();
 	if (count($running_torrent) > $max_running) {
 		$need_to_stop = array_slice($running_torrent, $max_running);
 	}
 	
-	if ($ds >= $r['ds_limit'] || ($rx+$tx) >= $r['xfer_limit']) {
+	if (($ds >= $r['ds_limit'] && $r['ds_limit'] > 0) || (($rx+$tx) >= $r['xfer_limit'] && $r['xfer_limit'] > 0)) {
 		$need_to_stop = $all_torrents_id;
 	}
 	
 	if (!empty($need_to_stop)) {
 		$id = $need_to_stop;
+		print_r($id);
 		$param = array();
-		$sql = "SELECT COUNT(`id`) AS `count`, `hash` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `stopped` = 0 GROUP BY `hash`";
-		$sth = $db->query($sql);
-		if (!$sth) {
+		$sql_st = "SELECT COUNT(`id`) AS `count`, `hash` FROM `torrents` WHERE `id` IN (".implode(",", $id).") AND `stopped` = 0 GROUP BY `hash`";
+		$sth_st = $db->query($sql_st);
+		if (!$sth_st) {
 			die("DB Error: Failed to get torrent info");
 		}
 		$tobestopped = array();
-		while ($r= $sth->fetch()) {
-			if ($r['count'] == 1) {
-				$tobestopped[] = $r['hash'];
+		while ($rr= $sth_st->fetch()) {
+			if ($rr['count'] == 1) {
+				$tobestopped[] = $rr['hash'];
 			}
 		}
 		$result = TRUE;
@@ -126,12 +124,19 @@ while($r = $sth->fetch()) {
 			$result = $torrents_rpc->result == "success";
 		}
 		if ($result) {
-			$sql = "UPDATE `torrents` SET `stopped` = 1 WHERE `id` IN (".implode(",", $id).")";
-			if (!$db->query($sql)) {
+			$sql_up = "UPDATE `torrents` SET `stopped` = 1 WHERE `id` IN (".implode(",", $id).")";
+			if (!$db->query($sql_up)) {
 				die("DB Error: Failed to update torrent status");
 			}
 		}
 	}
+	}
+	$bind = compact("uid","ds","rx","tx");
+        if (!$sth_u->execute($bind)) {
+                die(var_export($sth_u->errorInfo(),true));
+        }
+        print_r($bind);
+
 }
 
 $sql = "SELECT 
