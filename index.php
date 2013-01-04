@@ -28,7 +28,7 @@ if (empty($zcomp) && preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])) {
 
 try {
 	// db will be used globally, so will be defined once.
-	$db = new PDO($dbType.":".($dbType=="sqlite" ? "" : "host=").$dbHost.($dbType=="sqlite" ? "" : ";dbname=".$dbName), $dbUser, $dbPass,array(PDO::ATTR_PERSISTENT => $dbPersist,PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8")); //change here
+	$db = new PDO($dbDSN, $dbUser, $dbPass,array(PDO::ATTR_PERSISTENT => $dbPersist,PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8")); //change here
 } catch(PDOException $e) {
 	die($e->getMessage());
 }
