@@ -228,7 +228,7 @@ function onOk($msg="",$array=array()) {
 	$a['msg'] = $msg;
 	$json = json_encode($a);
 	$ob_level = ob_get_level ();
-	header("Content-Type: application/json");
+	//header("Content-Type: application/json");
         if (!empty($ob_level)) {
                 echo $json;
 //                header("Content-Length: ".ob_get_length());
@@ -377,7 +377,22 @@ function xSendFileDownload($path) {
 		}
 		// write the session to close so you can continue to browse on the site.
 		@session_write_close();
-		@header('X-Sendfile: '.$path);
+		if (isset($_SERVER['HTTP_RANGE']) && preg_match('/\Abytes=[0-9]+-\z/', $_SERVER['HTTP_RANGE']) && preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])) {
+		    // Set Content-Range header which should be like "bytes 2375680-12103815/12103816" 
+		    // That is start byte | dash | last byte | slash | total byte size
+		    // See RFC2616 section 14.16 http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.16
+		    $length = filesize($file);
+		    $start = substr($_SERVER['HTTP_RANGE'],6,-1);
+		    $end = $length - 1;
+		    header("Content-Range: bytes $start-$end/$length");
+		    // X-Sendfile2 does not set the 206 status code, we have to set it manually
+		    // See RFC2616 section 10.2.7 http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.7
+		    header("HTTP/1.1 206 Partial content");
+		    // The X-Sendfile2 with resume support should be like "/path/to/file 2375680-" 
+		    header("X-Sendfile2: ".$path." ".$start."-");
+		} else {
+			header("X-Sendfile: ".$path);
+		} 
 		exit();
 	} else {
 		onError("File Not found for download");

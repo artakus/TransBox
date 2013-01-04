@@ -16,7 +16,7 @@ if (!defined("TRANSBOX")) {
 
 $debug = TRUE; // set debug mode, this will apply on php and javascript. set it false on production mode.
 
-$version = "0.1"; // version number
+$version = "0.5"; // version number
 
 // action that not need to be logon to access
 $loginLessAction = explode(",", "login,setLanguage,lang.js");
@@ -30,3 +30,4 @@ $dbUser = "transbox"; //  db user - for mysql, null for sqlite
 $dbPass = "b6mFWwM3a9svQth3"; //  db pass - for mysql, null for sqlite
 $dbName = "transbox"; // for mysql
 $dbPersist = true; 
+$dbDSN = "mysql:dbname=transbox;unix_socket=/var/run/mysqld/mysqld.sock";

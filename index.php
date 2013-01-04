@@ -22,10 +22,9 @@ if ($debug) {
 
 //var_dump(ini_get('zlib.output_compression'));
 $zcomp = ini_get('zlib.output_compression');
-if (empty($zcomp)) {
-        ob_start("ob_gzhandler");
+if (empty($zcomp) && preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])) {
+	ob_start("ob_gzhandler");
 }
-
 
 try {
 	// db will be used globally, so will be defined once.
