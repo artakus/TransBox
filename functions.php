@@ -203,16 +203,17 @@ function onError($msg="",$error=array(),$sql="",$array=array()){
 	if (!empty($sql))
 		$a['sql'] = $sql;
 	if (AJAX) {
-		
 		die(json_encode($a));
 	} else {
 		$obj = $a;
 		global $action,$agent,$var,$lang;
 		$action = "error";
-		if (isset($a['error']))
+		if (isset($a['error'])) {
 			$a['error'] = print_r($a['error'],TRUE);
+		}
 		viewHTML($a);
 	}
+	die();
 }
 
 /**
@@ -228,16 +229,17 @@ function onOk($msg="",$array=array()) {
 	$a['msg'] = $msg;
 	$json = json_encode($a);
 	$ob_level = ob_get_level ();
-	//header("Content-Type: application/json");
-        if (!empty($ob_level)) {
+	header("Content-Type: application/json");
+		if (!empty($ob_level)) {
                 echo $json;
 //                header("Content-Length: ".ob_get_length());
-                ob_end_flush();
-        } else {
-                $len = strlen($json);
-                header("Content-Length: ".$len);
-                die($json);
-        }
+				ob_end_flush();
+		} else {
+				$len = strlen($json);
+				header("Content-Length: ".$len);
+				echo $json;
+		}
+	die();
 }
 
 /**
@@ -377,21 +379,27 @@ function xSendFileDownload($path) {
 		}
 		// write the session to close so you can continue to browse on the site.
 		@session_write_close();
-		if (isset($_SERVER['HTTP_RANGE']) && preg_match('/\Abytes=[0-9]+-\z/', $_SERVER['HTTP_RANGE']) && preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])) {
-		    // Set Content-Range header which should be like "bytes 2375680-12103815/12103816" 
-		    // That is start byte | dash | last byte | slash | total byte size
-		    // See RFC2616 section 14.16 http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.16
-		    $length = filesize($file);
-		    $start = substr($_SERVER['HTTP_RANGE'],6,-1);
-		    $end = $length - 1;
-		    header("Content-Range: bytes $start-$end/$length");
-		    // X-Sendfile2 does not set the 206 status code, we have to set it manually
-		    // See RFC2616 section 10.2.7 http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.7
-		    header("HTTP/1.1 206 Partial content");
+		
+		if (isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\\d+)-(\\d*)$/D", $_SERVER['HTTP_RANGE'], $matches) && preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])) {
+			$from = $matches[1];
+			$to = $matches[2];
+			if (empty($to))
+				$to = $filesize - 1;
+			$content_size = $to - $from + 1;
+			@header("HTTP/1.1 206 Partial Content");
+			@header("Content-Range: bytes {$from}-{$to}/{$filesize}");
+			@header("Content-Length: {$content_size}");
+			@header("Content-Type: application/octet-stream");
+			@header("Content-Disposition: attachment; filename=\"".$headerName."\"");
+			@header("Content-Transfer-Encoding: binary");
 		    // The X-Sendfile2 with resume support should be like "/path/to/file 2375680-" 
-		    header("X-Sendfile2: ".$path." ".$start."-");
+		    @header("X-Sendfile2: ".$path." ".$from."-".$to);
 		} else {
-			header("X-Sendfile: ".$path);
+			if (preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])){
+				@header("Accept-Ranges: bytes\n");
+			}
+			@header("Content-length: " . $filesize . "\n");
+			@header("X-Sendfile: ".$path);
 		} 
 		exit();
 	} else {
@@ -435,9 +443,10 @@ function phpDownloadFile($path) {
 			: basename($path);
 		// partial or full ?
 		$bufsize = 32768;
+		@session_write_close();
+		@set_time_limit(0);
 		if (isset($_SERVER['HTTP_RANGE'])) {
 			// Partial download
-
 			if (preg_match("/^bytes=(\\d+)-(\\d*)$/D", $_SERVER['HTTP_RANGE'], $matches)) {
 				$from = $matches[1];
 				$to = $matches[2];
@@ -445,13 +454,12 @@ function phpDownloadFile($path) {
 					$to = $filesize - 1;
 				$content_size = $to - $from + 1;
 				@header("HTTP/1.1 206 Partial Content");
-				@header("Content-Range: $from - $to / $filesize");
-				@header("Content-Length: $content_size");
+				@header("Content-Range: bytes {$from}-{$to}/{$filesize}");
+				@header("Content-Length: {$content_size}");
 				@header("Content-Type: application/octet-stream");
 				@header("Content-Disposition: attachment; filename=\"".$headerName."\"");
 				@header("Content-Transfer-Encoding: binary");
 				// write the session to close so you can continue to browse on the site.
-				@session_write_close();
 				$fh = fopen($path, "rb");
 				fseek($fh, $from);
 				$cur_pos = ftell($fh);
@@ -459,10 +467,14 @@ function phpDownloadFile($path) {
 					$buffer = fread($fh, $bufsize);
 					echo $buffer;
 					$cur_pos = ftell($fh);
+					@ob_flush();
+					@flush();
 				}
 				$buffer = fread($fh, $to + 1 - $cur_pos);
 				echo $buffer;
 				fclose($fh);
+				@ob_flush();
+				@flush();
 			} else {
 				@header("HTTP/1.1 500 Internal Server Error");
 				onError("Donwload error");				
@@ -480,8 +492,6 @@ function phpDownloadFile($path) {
 				@header("Content-type: image/$fileExt\n");
 			}
 			// write the session to close so you can continue to browse on the site.
-			@session_write_close();
-			@set_time_limit(0);
 			$file = @fopen($path,"rb");
 			while(!feof($file))
 			{
