@@ -26,9 +26,12 @@ if (empty($a)) {
 if (!isset($a['time']) || !isset($a['url'])) {
 	onError("Error: Invalid parameters",$a);
 }
+/*
 if (time() - $a['time'] > $_SESSION['cfg']['dl_timeout']) {
 	onError("Error: URL expired");
 }
+ * comment this for a while, too much problem. will reconsider.. in future
+ */
 
 $realPath = $a['url'];
 
@@ -44,7 +47,11 @@ if ($_SESSION['cfg']['use_xsendfile'] &&
 			)
 		)
 	) {
-	xSendFileDownload($realPath);
+	if (isset($_SERVER['HTTP_RANGE']) && preg_match("/apache/i",$_SERVER['SERVER_SOFTWARE'])) {
+		phpDownloadFile($realPath);
+	} else {
+		xSendFileDownload($realPath);
+	}
 } else {
 	phpDownloadFile($realPath);
 }
