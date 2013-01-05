@@ -36,7 +36,14 @@ if (!file_exists($realPath)) {
 	onError("Error: Path not exists");
 }
 
-if($_SESSION['cfg']['use_xsendfile'] && function_exists("apache_get_modules") && in_array("mod_xsendfile", apache_get_modules())) {
+if ($_SESSION['cfg']['use_xsendfile'] && 
+		(
+			preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE']) || 
+			(
+				preg_match("/apache/i",$_SERVER['SERVER_SOFTWARE']) && function_exists("apache_get_modules") && in_array("mod_xsendfile", apache_get_modules())
+			)
+		)
+	) {
 	xSendFileDownload($realPath);
 } else {
 	phpDownloadFile($realPath);

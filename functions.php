@@ -348,7 +348,7 @@ function authTokenDownload($path) {
  * @param string $path Fullpath of the file
  */
 function xSendFileDownload($path) {
-	if (!function_exists("apache_get_modules") ||  !in_array("mod_xsendfile", apache_get_modules())) {
+	if (preg_match("/apache/i",$_SERVER['SERVER_SOFTWARE']) && function_exists("apache_get_modules") && !in_array("mod_xsendfile", apache_get_modules())) {
 		onError("X-Sendfile module no available");
 	}
 	$root = $_SESSION['cfg']['download_path'];
@@ -363,13 +363,10 @@ function xSendFileDownload($path) {
 		$filesize = sprintf("%.0f",filesize($path));
 		$pi = pathinfo($path);
 		$file = $pi['filename'];
-		$fileExt = $pi['extension'];
-		$headerName = (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE"))
-			? preg_replace('/\./', '%2e', $file, substr_count($file, '.') - 1).".".$fileExt
-			: basename($path);
+		$fileExt = strtolower($pi['extension']);
+		$headerName = (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) ? str_replace(".", "%2e", $file).".".$fileExt	: $pi['basename'];
 		@header("Content-length: " . $filesize . "\n");
-		$fileExt = $pi['extension'];
-		$is_image = preg_match("#(jpg|gif|png)#",$fileExt);
+		$is_image = preg_match("/jpg|gif|png/",$fileExt);
 		if (!$is_image) {
 			@header("Content-type: application/octet-stream\n");
 			@header("Content-disposition: attachment; filename=\"".$headerName."\"\n");
@@ -379,25 +376,19 @@ function xSendFileDownload($path) {
 		}
 		// write the session to close so you can continue to browse on the site.
 		@session_write_close();
-		
 		if (isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\\d+)-(\\d*)$/D", $_SERVER['HTTP_RANGE'], $matches) && preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])) {
 			$from = $matches[1];
-			$to = $matches[2];
+			$to = isset($matches[2]) ? $matches[2]: 0;
 			if (empty($to))
 				$to = $filesize - 1;
 			$content_size = $to - $from + 1;
 			@header("HTTP/1.1 206 Partial Content");
 			@header("Content-Range: bytes {$from}-{$to}/{$filesize}");
 			@header("Content-Length: {$content_size}");
-			@header("Content-Type: application/octet-stream");
-			@header("Content-Disposition: attachment; filename=\"".$headerName."\"");
-			@header("Content-Transfer-Encoding: binary");
-		    // The X-Sendfile2 with resume support should be like "/path/to/file 2375680-" 
+		    // The X-Sendfile2 with resume support should be like "/path/to/file 2375680-"
+		    $path = str_replace(',', '%2c', urlencode($path)); 
 		    @header("X-Sendfile2: ".$path." ".$from."-".$to);
 		} else {
-			if (preg_match("/lighttpd/i",$_SERVER['SERVER_SOFTWARE'])){
-				@header("Accept-Ranges: bytes\n");
-			}
 			@header("Content-length: " . $filesize . "\n");
 			@header("X-Sendfile: ".$path);
 		} 
@@ -413,11 +404,11 @@ function xSendFileDownload($path) {
  * @param string $path Fullpath of the file
  */
 function phpDownloadFile($path) {
-	$ob_level = ob_get_level ();
-        if (!empty($ob_level)) {
+	$ob_level = ob_get_level();
+	if (!empty($ob_level)) {
 		ob_end_clean();
-        }	
-	$root =  $_SESSION['cfg']['download_path'];
+	}
+	$root = $_SESSION['cfg']['download_path'];
 	if ($_SESSION['login']['level'] > 1) {
 		$root = $root."/".$_SESSION['login']['id'];	
 	}
@@ -436,11 +427,9 @@ function phpDownloadFile($path) {
 		$filesize = sprintf("%.0f",filesize($path));
 		$pi = pathinfo($path);
 		$file = $pi['filename'];
-		$fileExt = $pi['extension'];
+		$fileExt = strtolower($pi['extension']);
 		// filenames in IE containing dots will screw up the filename
-		$headerName = (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE"))
-			? preg_replace('/\./', '%2e', $file, substr_count($file, '.') - 1).".".$fileExt
-			: basename($path);
+		$headerName = (strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) ? str_replace(".", "%2e", $file).".".$fileExt	: $pi['basename'];
 		// partial or full ?
 		$bufsize = 32768;
 		@session_write_close();
@@ -449,7 +438,7 @@ function phpDownloadFile($path) {
 			// Partial download
 			if (preg_match("/^bytes=(\\d+)-(\\d*)$/D", $_SERVER['HTTP_RANGE'], $matches)) {
 				$from = $matches[1];
-				$to = $matches[2];
+				$to = isset($matches[2]) ? $matches[2]: 0;
 				if (empty($to))
 					$to = $filesize - 1;
 				$content_size = $to - $from + 1;
@@ -458,7 +447,6 @@ function phpDownloadFile($path) {
 				@header("Content-Length: {$content_size}");
 				@header("Content-Type: application/octet-stream");
 				@header("Content-Disposition: attachment; filename=\"".$headerName."\"");
-				@header("Content-Transfer-Encoding: binary");
 				// write the session to close so you can continue to browse on the site.
 				$fh = fopen($path, "rb");
 				fseek($fh, $from);
@@ -481,15 +469,14 @@ function phpDownloadFile($path) {
 			}
 		} else {
 			// standard download
-			@header("Content-transfer-encoding: binary\n");
 			@header("Content-length: " . $filesize . "\n");
-			$is_image = preg_match("#(jpg|gif|png)#",$fileExt);
+			$is_image = preg_match("/jpg|gif|png/",$fileExt);
 			if (!$is_image) {
 				@header("Content-type: application/octet-stream\n");
 				@header("Content-disposition: attachment; filename=\"".$headerName."\"\n");
 				@header("Accept-Ranges: bytes\n");
 			} else {
-				@header("Content-type: image/$fileExt\n");
+				@header("Content-type: image/{$fileExt}\n");
 			}
 			// write the session to close so you can continue to browse on the site.
 			$file = @fopen($path,"rb");
